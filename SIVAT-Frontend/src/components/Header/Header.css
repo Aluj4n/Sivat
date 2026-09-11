@@ -1,0 +1,129 @@
+.canal-n-header {
+  background-color: #1c527e; /* Match the dark blue from reference */
+  color: #ffffff;
+  padding: 0 40px;
+  height: 110px;
+  display: flex;
+  align-items: center;
+  font-family: 'Inter', 'Roboto', sans-serif;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  width: 40px;
+  background-color: transparent;
+}
+
+/* Simulate the N logo */
+.logo-text {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: #ffffff;
+  /* Making it look a bit closer to the stylized N */
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+.main-nav ul {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 24px;
+}
+
+.main-nav a {
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.main-nav a:hover {
+  opacity: 0.8;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+
+.alerta-noticias {
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.alerta-noticias .hashtag {
+  margin-right: 2px;
+}
+
+.whatsapp-contact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.whatsapp-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.search-button {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  transition: opacity 0.2s ease;
+}
+
+.search-button:hover {
+  opacity: 0.8;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .canal-n-header {
+    padding: 0 20px;
+  }
+  
+  .main-nav {
+    display: none; /* Hide nav on mobile for simplicity, could add a hamburger menu */
+  }
+  
+  .alerta-noticias {
+    display: none;
+  }
+}
