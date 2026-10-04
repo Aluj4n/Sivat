@@ -65,6 +65,11 @@
   opacity: 0.8;
 }
 
+.main-nav a.active {
+  color: #ffd166;
+  opacity: 1;
+}
+
 .header-right {
   display: flex;
   align-items: center;
