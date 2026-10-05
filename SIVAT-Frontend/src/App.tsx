@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Header from './components/Header/Header';
+import Dashboard from './views/Dashboard';
 import Internacionales from './views/Internacionales';
 import './App.css';
 
@@ -12,8 +13,9 @@ function App() {
     <div className="app-container">
       <Header vistaActiva={vistaActiva} onNavigate={setVistaActiva} />
       <main className="main-content">
+        {vistaActiva === 'dashboard' && <Dashboard />}
         {vistaActiva === 'internacionales' && <Internacionales />}
-        {vistaActiva !== 'internacionales' && (
+        {vistaActiva !== 'dashboard' && vistaActiva !== 'internacionales' && (
           <div className="vista-pendiente">
             <p>Esta sección aún está en construcción.</p>
           </div>
