@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import MedidorConfianza from '../components/MedidorConfianza/MedidorConfianza';
 import './Validacion.css';
 
 const API_BASE = '/api/v1/verificacion';
@@ -15,9 +16,12 @@ interface Evaluacion {
   afirmacion_id: number;
   texto: string;
   probabilidad_desinformacion: number;
+  confianza_modelo: number;
   senal: string;
   recomendacion_sistema: string;
   version_modelo: string;
+  fuente_origen: string | null;
+  url_original: string | null;
   nivel_evidencia_disponible: string | null;
   fuentes_coincidentes: number | null;
   fuentes_contradictorias: number | null;
@@ -25,14 +29,6 @@ interface Evaluacion {
   cobertura_evidencia: string | null;
   fecha_evaluacion?: string;
   decision?: DecisionInfo | null;
-}
-
-// Mismos umbrales que services/clasificador_service.py — magnitud de evidencia,
-// nunca una etiqueta de verdadero/falso (RNF-08).
-function nivelConfianza(prob: number): { label: string; color: string } {
-  if (prob >= 0.66) return { label: 'Alto', color: 'var(--seq-500)' };
-  if (prob >= 0.33) return { label: 'Medio', color: 'var(--seq-350)' };
-  return { label: 'Bajo', color: 'var(--seq-200)' };
 }
 
 function formatearFecha(iso?: string): string {
@@ -148,20 +144,25 @@ export default function Validacion() {
 
         <ul className="cola-lista">
           {pendientes.map((e) => {
-            const nivel = nivelConfianza(e.probabilidad_desinformacion);
             return (
               <li key={e.afirmacion_id} className="cola-item">
                 <div className="cola-info">
                   <p className="cola-texto">{e.texto}</p>
                   <span className="cola-meta">
-                    {formatearFecha(e.fecha_evaluacion)} · {e.senal} · modelo {e.version_modelo}
+                    {e.fuente_origen ? `${e.fuente_origen} · ` : 'Ingreso manual · '}
+                    {formatearFecha(e.fecha_evaluacion)} · modelo {e.version_modelo}
+                    {e.url_original && (
+                      <>
+                        {' · '}
+                        <a href={e.url_original} target="_blank" rel="noopener noreferrer">
+                          Ver fuente ↗
+                        </a>
+                      </>
+                    )}
                   </span>
                 </div>
                 <div className="cola-acciones">
-                  <span className="nivel-confianza">
-                    <span className="nivel-confianza-dot" style={{ backgroundColor: nivel.color }} />
-                    Confianza: {nivel.label} ({(e.probabilidad_desinformacion * 100).toFixed(0)}%)
-                  </span>
+                  <MedidorConfianza confianza={e.confianza_modelo} />
                   <div className="cola-botones">
                     <button
                       type="button"
@@ -202,7 +203,7 @@ export default function Validacion() {
                 <div className="cola-info">
                   <p className="cola-texto">{e.texto}</p>
                   <span className="cola-meta">
-                    IA: {e.senal} · {formatearFecha(e.fecha_evaluacion)}
+                    Confianza del modelo: {e.confianza_modelo}% · {formatearFecha(e.fecha_evaluacion)}
                   </span>
                 </div>
                 <span className={`decision-badge decision-${e.decision!.decision_periodista.toLowerCase()}`}>

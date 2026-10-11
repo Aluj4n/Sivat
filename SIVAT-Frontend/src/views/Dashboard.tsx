@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import MedidorConfianza from '../components/MedidorConfianza/MedidorConfianza';
 import './Dashboard.css';
 
 // Dashboard principal de SIVAT. Los KPIs y la "cola de validación" ya usan
@@ -21,17 +22,13 @@ interface Evaluacion {
   afirmacion_id: number;
   texto: string;
   probabilidad_desinformacion: number;
+  confianza_modelo: number;
   senal: string;
   recomendacion_sistema: string;
   version_modelo: string;
+  fuente_origen: string | null;
   fecha_evaluacion: string;
   decision?: DecisionInfo | null;
-}
-
-function nivelConfianza(prob: number): { label: string; color: string } {
-  if (prob >= 0.66) return { label: 'Alto', color: 'var(--seq-500)' };
-  if (prob >= 0.33) return { label: 'Medio', color: 'var(--seq-350)' };
-  return { label: 'Bajo', color: 'var(--seq-200)' };
 }
 
 function formatearFecha(iso?: string): string {
@@ -279,18 +276,16 @@ export default function Dashboard() {
 
           <ul className="validacion-lista">
             {pendientes.slice(0, 5).map((e) => {
-              const nivel = nivelConfianza(e.probabilidad_desinformacion);
               return (
                 <li key={e.afirmacion_id} className="validacion-item">
                   <div className="validacion-info">
                     <p className="validacion-afirmacion">{e.texto}</p>
-                    <span className="validacion-fuente">{formatearFecha(e.fecha_evaluacion)} · {e.senal}</span>
+                    <span className="validacion-fuente">
+                      {e.fuente_origen ?? 'Ingreso manual'} · {formatearFecha(e.fecha_evaluacion)}
+                    </span>
                   </div>
                   <div className="validacion-acciones">
-                    <span className="nivel-confianza">
-                      <span className="nivel-confianza-dot" style={{ backgroundColor: nivel.color }} />
-                      Confianza: {nivel.label}
-                    </span>
+                    <MedidorConfianza confianza={e.confianza_modelo} compacto />
                     <div className="validacion-botones">
                       <button
                         type="button"

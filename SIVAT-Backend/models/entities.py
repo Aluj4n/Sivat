@@ -16,10 +16,34 @@ class FuenteExterna(Base):
     titular = Column(String(500), nullable=True)
     imagen_url = Column(String(1000), nullable=True)
     url_original = Column(String(1000), nullable=True)
-    pais = Column(String(10), nullable=True, index=True) # 'PE', 'INTL', o código de país de GDELT
+    pais = Column(String(100), nullable=True, index=True) # 'PE', 'INTL', o país de origen según GDELT
     fecha_publicacion = Column(DateTime(timezone=True), nullable=True)
     # RESTRICCIÓN ÉTICA: nivel de confianza basado en transparencia/trazabilidad, NO un veredicto de veracidad
     nivel_confianza_calculado = Column(String(50), nullable=True)
+
+class NoticiaFeed(Base):
+    """
+    Feed temporal del panel Internacionales. Todo lo que se jala de GDELT y
+    YouTube cae aquí y se borra a las 24 h (minimización de datos, Ley 29733).
+    Solo cuando un periodista pulsa "Validar" la noticia se copia a
+    FuenteExterna (permanente) y entra al flujo de verificación.
+    """
+    __tablename__ = "noticia_feed"
+    id = Column(Integer, primary_key=True, index=True)
+    origen = Column(String(50), index=True)
+    identificador_externo = Column(String(255), unique=True, index=True, nullable=False)
+    titular = Column(String(500), nullable=True)
+    texto_procesado = Column(Text, nullable=True)
+    imagen_url = Column(String(1000), nullable=True)
+    url_original = Column(String(1000), nullable=True)
+    pais = Column(String(100), nullable=True)
+    fecha_publicacion = Column(DateTime(timezone=True), nullable=True)
+    metadatos = Column(Text, nullable=True)
+    fecha_captura = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+    en_validacion = Column(Boolean, nullable=False, default=False)
+    afirmacion_id = Column(Integer, ForeignKey("afirmacion.id"), nullable=True)
+
 
 class Tendencia(Base):
     __tablename__ = "tendencia"

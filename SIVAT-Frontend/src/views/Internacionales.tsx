@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import NewsCard from '../components/NewsCard/NewsCard';
 import './Internacionales.css';
 
@@ -11,27 +11,30 @@ export interface NoticiaInternacional {
   pais: string | null;
   categoria: string;
   fecha_publicacion: string | null;
-  nivel_confianza: string | null;
+  en_validacion: boolean;
+  afirmacion_id: number | null;
 }
 
-const API_BASE = '/api/v1';
-const MAX_NOTICIAS_EN_PANTALLA = 60;
+interface Props {
+  onIrAValidacion: () => void;
+}
 
-export default function Internacionales() {
+const API_BASE = '/api/v1/noticias/internacionales';
+const MAX_NOTICIAS_EN_PANTALLA = 100;
+
+export default function Internacionales({ onIrAValidacion }: Props) {
   const [noticias, setNoticias] = useState<NoticiaInternacional[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [actualizando, setActualizando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [enVivo, setEnVivo] = useState(false);
-  const idsConocidos = useRef<Set<number>>(new Set());
+  const [validandoId, setValidandoId] = useState<number | null>(null);
+  const [aviso, setAviso] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null);
 
   const cargarNoticias = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/noticias/internacionales`);
+      const response = await fetch(API_BASE);
       if (!response.ok) throw new Error('No se pudo obtener las noticias internacionales');
-      const data: NoticiaInternacional[] = await response.json();
-      idsConocidos.current = new Set(data.map((n) => n.id));
-      setNoticias(data);
+      setNoticias(await response.json());
       setError(null);
     } catch (err) {
       console.error('Error al cargar noticias internacionales', err);
@@ -45,37 +48,41 @@ export default function Internacionales() {
     cargarNoticias();
   }, [cargarNoticias]);
 
-  // Conexión en tiempo real: cada rumor/noticia nueva ingerida desde GDELT, X o
-  // YouTube llega aquí apenas se guarda en el backend y se coloca primero,
-  // sin importar si luego se confirma como verdadera o falsa (eso lo valida el periodista después).
+  // El backend empuja por SSE tanto noticias nuevas como cambios de estado
+  // (p. ej. otra persona la envió a validación): nueva -> arriba, conocida -> se reemplaza.
   useEffect(() => {
-    const source = new EventSource(`${API_BASE}/noticias/internacionales/stream`);
-
+    const source = new EventSource(`${API_BASE}/stream`);
     source.onopen = () => setEnVivo(true);
     source.onerror = () => setEnVivo(false);
-
     source.onmessage = (event) => {
-      const nueva: NoticiaInternacional = JSON.parse(event.data);
-      if (idsConocidos.current.has(nueva.id)) return;
-      idsConocidos.current.add(nueva.id);
-      setNoticias((actuales) => [nueva, ...actuales].slice(0, MAX_NOTICIAS_EN_PANTALLA));
+      const recibida: NoticiaInternacional = JSON.parse(event.data);
+      setNoticias((actuales) => {
+        if (actuales.some((n) => n.id === recibida.id)) {
+          return actuales.map((n) => (n.id === recibida.id ? recibida : n));
+        }
+        return [recibida, ...actuales].slice(0, MAX_NOTICIAS_EN_PANTALLA);
+      });
     };
-
     return () => source.close();
   }, []);
 
-  const handleActualizar = async () => {
-    setActualizando(true);
+  const handleValidar = async (noticia: NoticiaInternacional) => {
+    setValidandoId(noticia.id);
+    setAviso(null);
     try {
-      // Fuerza un ciclo de ingesta inmediato; el ciclo automático en el
-      // backend ya hace esto solo cada minuto, esto solo lo adelanta.
-      await Promise.allSettled([
-        fetch(`${API_BASE}/ingesta/internacional/gdelt`),
-        fetch(`${API_BASE}/ingesta/internacional/x`),
-        fetch(`${API_BASE}/ingesta/internacional/youtube`),
-      ]);
+      const response = await fetch(`${API_BASE}/${noticia.id}/validar`, { method: 'POST' });
+      if (!response.ok) {
+        const detalle = await response.json().catch(() => null);
+        throw new Error(detalle?.detail || 'No se pudo enviar a validación.');
+      }
+      setNoticias((actuales) =>
+        actuales.map((n) => (n.id === noticia.id ? { ...n, en_validacion: true } : n)),
+      );
+      setAviso({ tipo: 'ok', texto: `"${noticia.titular}" se envió a Validación.` });
+    } catch (err) {
+      setAviso({ tipo: 'error', texto: err instanceof Error ? err.message : 'Error al enviar a validación.' });
     } finally {
-      setActualizando(false);
+      setValidandoId(null);
     }
   };
 
@@ -90,29 +97,40 @@ export default function Internacionales() {
               {enVivo ? 'EN VIVO' : 'CONECTANDO…'}
             </span>
           </h1>
-          <p>Rumores y noticias captados en tiempo real desde GDELT Project, X y YouTube.</p>
+          <p>
+            Noticias y rumores internacionales de GDELT, medios en español (RSS), Bluesky, Reddit y YouTube.
+            Se actualiza solo y lo no validado se descarta a las 24 h.
+          </p>
         </div>
-        <button
-          className="internacionales-refresh"
-          onClick={handleActualizar}
-          disabled={actualizando}
-        >
-          {actualizando ? 'Consultando fuentes…' : 'Forzar actualización'}
-        </button>
       </div>
+
+      {aviso && (
+        <div className={`internacionales-aviso is-${aviso.tipo}`} role="status">
+          <span>{aviso.texto}</span>
+          {aviso.tipo === 'ok' && (
+            <button type="button" onClick={onIrAValidacion}>
+              Ir a Validación →
+            </button>
+          )}
+        </div>
+      )}
 
       {cargando && <p className="internacionales-estado">Cargando noticias…</p>}
       {!cargando && error && <p className="internacionales-estado internacionales-error">{error}</p>}
       {!cargando && !error && noticias.length === 0 && (
         <p className="internacionales-estado">
-          Aún no hay noticias internacionales ingeridas. Aparecerán aquí automáticamente
-          en cuanto el sistema detecte una nueva.
+          Aún no hay noticias en el feed. Aparecerán aquí automáticamente en el próximo ciclo de captura.
         </p>
       )}
 
       <div className="internacionales-grid">
         {noticias.map((noticia) => (
-          <NewsCard key={noticia.id} noticia={noticia} />
+          <NewsCard
+            key={noticia.id}
+            noticia={noticia}
+            validando={validandoId === noticia.id}
+            onValidar={handleValidar}
+          />
         ))}
       </div>
     </div>

@@ -150,28 +150,22 @@
   color: var(--text-muted);
 }
 
+.cola-meta a {
+  color: #1c527e;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.cola-meta a:hover {
+  text-decoration: underline;
+}
+
 .cola-acciones {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 10px;
-}
-
-.nivel-confianza {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-secondary);
-}
-
-.nivel-confianza-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
+  gap: 16px;
 }
 
 .cola-botones {

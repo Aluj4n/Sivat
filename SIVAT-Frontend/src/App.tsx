@@ -15,7 +15,9 @@ function App() {
       <Header vistaActiva={vistaActiva} onNavigate={setVistaActiva} />
       <main className="main-content">
         {vistaActiva === 'dashboard' && <Dashboard />}
-        {vistaActiva === 'internacionales' && <Internacionales />}
+        {vistaActiva === 'internacionales' && (
+          <Internacionales onIrAValidacion={() => setVistaActiva('validacion')} />
+        )}
         {vistaActiva === 'validacion' && <Validacion />}
         {vistaActiva === 'peru' && (
           <div className="vista-pendiente">

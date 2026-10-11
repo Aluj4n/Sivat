@@ -6,7 +6,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from api import ingesta, internacionales, verificacion
 from db.session import async_session
-from services.ingesta_service import INGESTORES_INTERNACIONALES, ingerir_gdelt_internacional
+from services.ingesta_service import (
+    ingerir_bluesky_internacional,
+    ingerir_gdelt_internacional,
+    ingerir_reddit_internacional,
+    ingerir_rss_medios,
+    ingerir_youtube_internacional,
+    limpiar_feed_vencido,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -35,57 +42,53 @@ def read_root():
     return {"message": "Bienvenido a la API de SIVAT"}
 
 
-async def _ciclo_ingesta_internacional() -> None:
+async def _ciclo(nombre: str, tarea, intervalo_segundos: int) -> None:
     """
-    Sondea X y YouTube en segundo plano de forma continua para que cualquier
-    rumor o noticia nueva llegue al panel Internacionales en tiempo real (vía
-    SSE), sin depender de que alguien abra el panel o pulse "Actualizar".
+    Ejecuta `tarea(db)` cada `intervalo_segundos` para siempre. Un fallo (API
+    caída, 429, cuota agotada) solo se registra y se reintenta en el próximo
+    ciclo, sin detener las demás fuentes.
     """
-    while True:
-        for ingerir in INGESTORES_INTERNACIONALES:
-            try:
-                async with async_session() as db:
-                    nuevos = await ingerir(db)
-                    if nuevos:
-                        logger.info(f"[ingesta-internacional] {ingerir.__name__}: {nuevos} nuevas")
-            except Exception:
-                logger.warning(f"[ingesta-internacional] Fallo en {ingerir.__name__}", exc_info=True)
-        await asyncio.sleep(settings.INTERVAL_INGESTA_INTERNACIONAL_SEGUNDOS)
-
-
-async def _ciclo_ingesta_gdelt() -> None:
-    """
-    Sondea GDELT por separado y con menor frecuencia: es un servicio gratuito
-    sin API key que bloquea la IP por tiempo prolongado si se le insiste
-    cada minuto igual que a X/YouTube. Se puede desactivar por completo con
-    GDELT_INGESTA_HABILITADA=false en .env mientras la IP esté bloqueada.
-    """
-    if not settings.GDELT_INGESTA_HABILITADA:
-        logger.info("[ingesta-gdelt] Deshabilitado por configuración (GDELT_INGESTA_HABILITADA=false)")
-        return
     while True:
         try:
             async with async_session() as db:
-                nuevos = await ingerir_gdelt_internacional(db)
-                if nuevos:
-                    logger.info(f"[ingesta-gdelt] {nuevos} nuevas")
+                resultado = await tarea(db)
+                if resultado:
+                    logger.info(f"[{nombre}] {resultado} registros")
         except Exception:
-            logger.warning("[ingesta-gdelt] Fallo en ingerir_gdelt_internacional", exc_info=True)
-        await asyncio.sleep(settings.INTERVAL_INGESTA_GDELT_SEGUNDOS)
+            logger.warning(f"[{nombre}] Fallo en el ciclo", exc_info=True)
+        await asyncio.sleep(intervalo_segundos)
+
+
+CICLOS_SEGUNDO_PLANO = [
+    # (nombre, tarea, intervalo, habilitado)
+    ("ingesta-gdelt", ingerir_gdelt_internacional, settings.INTERVAL_INGESTA_GDELT_SEGUNDOS,
+     settings.GDELT_INGESTA_HABILITADA),
+    ("ingesta-youtube", ingerir_youtube_internacional, settings.INTERVAL_INGESTA_YOUTUBE_SEGUNDOS,
+     settings.YOUTUBE_INGESTA_HABILITADA),
+    ("ingesta-bluesky", ingerir_bluesky_internacional, settings.INTERVAL_INGESTA_BLUESKY_SEGUNDOS,
+     settings.BLUESKY_INGESTA_HABILITADA),
+    ("ingesta-reddit", ingerir_reddit_internacional, settings.INTERVAL_INGESTA_REDDIT_SEGUNDOS,
+     settings.REDDIT_INGESTA_HABILITADA),
+    ("ingesta-rss", ingerir_rss_medios, settings.INTERVAL_INGESTA_RSS_SEGUNDOS,
+     settings.RSS_INGESTA_HABILITADA),
+    ("limpieza-feed", limpiar_feed_vencido, 3600, True),
+]
 
 
 @app.on_event("startup")
-async def iniciar_ingesta_automatica() -> None:
-    app.state.tarea_ingesta_internacional = asyncio.create_task(_ciclo_ingesta_internacional())
-    app.state.tarea_ingesta_gdelt = asyncio.create_task(_ciclo_ingesta_gdelt())
+async def iniciar_ciclos() -> None:
+    app.state.tareas_fondo = []
+    for nombre, tarea, intervalo, habilitado in CICLOS_SEGUNDO_PLANO:
+        if not habilitado:
+            logger.info(f"[{nombre}] Deshabilitado por configuración")
+            continue
+        app.state.tareas_fondo.append(asyncio.create_task(_ciclo(nombre, tarea, intervalo)))
 
 
 @app.on_event("shutdown")
-async def detener_ingesta_automatica() -> None:
-    for nombre in ("tarea_ingesta_internacional", "tarea_ingesta_gdelt"):
-        tarea = getattr(app.state, nombre, None)
-        if tarea:
-            tarea.cancel()
+async def detener_ciclos() -> None:
+    for tarea in getattr(app.state, "tareas_fondo", []):
+        tarea.cancel()
 
 if __name__ == "__main__":
     import uvicorn

@@ -63,27 +63,38 @@
   color: #5a6b7b;
   font-size: 14px;
   margin: 0;
+  max-width: 720px;
 }
 
-.internacionales-refresh {
-  background-color: #1c527e;
-  color: #ffffff;
+.internacionales-aviso {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.internacionales-aviso.is-ok {
+  background-color: #eef4fa;
+  color: #1c527e;
+}
+
+.internacionales-aviso.is-error {
+  background-color: #fbe6e6;
+  color: #a12121;
+}
+
+.internacionales-aviso button {
+  background: none;
   border: none;
-  padding: 10px 18px;
-  border-radius: 6px;
+  color: inherit;
   font-weight: 700;
   font-size: 13px;
   cursor: pointer;
-  transition: opacity 0.2s ease;
-}
-
-.internacionales-refresh:hover {
-  opacity: 0.9;
-}
-
-.internacionales-refresh:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  white-space: nowrap;
 }
 
 .internacionales-estado {

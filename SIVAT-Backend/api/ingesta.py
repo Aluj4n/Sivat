@@ -12,6 +12,7 @@ from services.youtube_service import YouTubeService
 from services.normalizacion import normalizar_gdelt, normalizar_x, normalizar_youtube
 from services.ingesta_service import (
     guardar_registros,
+    ingerir_gdelt_doc_api,
     ingerir_gdelt_internacional,
     ingerir_x_internacional,
     ingerir_youtube_internacional,
@@ -48,8 +49,11 @@ async def ingest_gdelt_internacional(query: str | None = None, db: AsyncSession 
     para forzar una actualización inmediata.
     """
     try:
-        kwargs = {"query": query} if query else {}
-        nuevos = await ingerir_gdelt_internacional(db, **kwargs)
+        # Con query: búsqueda por DOC API; sin ella: el último archivo GKG de 15 min
+        if query:
+            nuevos = await ingerir_gdelt_doc_api(db, query=query)
+        else:
+            nuevos = await ingerir_gdelt_internacional(db)
         return {"status": "success", "source": "GDELT", "nuevos_guardados": nuevos}
     except httpx.HTTPStatusError as e:
         logger.error(f"GDELT HTTP Error: {e.response.text}")

@@ -7,6 +7,7 @@ pydantic==2.4.2
 pydantic-settings==2.0.3
 alembic==1.12.0
 python-dotenv==1.0.0
+feedparser==6.0.11
 
 # Motor de IA/ML (Informe IA/ML: TF-IDF + clasificadores + RAG por similitud coseno)
 pandas==2.1.1
