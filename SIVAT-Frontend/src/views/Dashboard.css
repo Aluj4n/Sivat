@@ -58,14 +58,18 @@
   line-height: 1.4;
 }
 
-.dashboard-disclaimer {
-  font-size: 12px;
+.panel-muestra {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
   color: var(--text-muted);
-  background-color: #f9f9f7;
-  border: 1px solid var(--gridline);
-  border-radius: 6px;
-  padding: 8px 12px;
-  margin: 16px 0 28px 0;
+  background-color: #f2f1ec;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-left: 8px;
+  vertical-align: middle;
 }
 
 /* KPI row */
@@ -73,7 +77,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 16px;
-  margin-bottom: 28px;
+  margin: 24px 0 28px 0;
 }
 
 .stat-tile {
@@ -108,26 +112,6 @@
 .stat-tile-delta {
   font-size: 11px;
   color: var(--text-muted);
-}
-
-.stat-tile-delta.is-positivo {
-  color: #006300;
-}
-
-.sparkline {
-  flex-shrink: 0;
-}
-
-.sparkline-line {
-  fill: none;
-  stroke: var(--baseline);
-  stroke-width: 2;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-}
-
-.sparkline-dot {
-  fill: var(--series-1);
 }
 
 /* Panels / charts */
@@ -274,6 +258,11 @@
   gap: 4px;
 }
 
+.validacion-estado {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
 .validacion-item {
   padding: 14px 0;
   border-bottom: 1px solid var(--gridline);
@@ -333,7 +322,54 @@
   padding: 5px 10px;
   border-radius: 6px;
   border: 1px solid var(--gridline);
-  background-color: #f9f9f7;
-  color: var(--text-muted);
+  background-color: #fff;
+  color: #1c527e;
+  cursor: pointer;
+}
+
+.validacion-botones button:hover:not(:disabled) {
+  background-color: #eef4fa;
+}
+
+.validacion-botones button:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
+}
+
+.decision-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background-color: #eef1f4;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.decision-aceptado {
+  background-color: #e3f3e3;
+  color: #1a6b1a;
+}
+
+.decision-rechazado {
+  background-color: #fbe6e6;
+  color: #a12121;
+}
+
+.decision-observado {
+  background-color: #fef3da;
+  color: #8a5a00;
+}
+
+.dashboard-ver-mas {
+  display: block;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1c527e;
+  margin-top: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
 }

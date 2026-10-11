@@ -4,7 +4,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
-from api import ingesta, internacionales
+from api import ingesta, internacionales, verificacion
 from db.session import async_session
 from services.ingesta_service import INGESTORES_INTERNACIONALES, ingerir_gdelt_internacional
 
@@ -28,6 +28,7 @@ app.add_middleware(
 # Include Routers
 app.include_router(ingesta.router, prefix=f"{settings.API_V1_STR}/ingesta", tags=["Ingesta de Datos"])
 app.include_router(internacionales.router, prefix=f"{settings.API_V1_STR}/noticias", tags=["Noticias Internacionales"])
+app.include_router(verificacion.router, prefix=f"{settings.API_V1_STR}/verificacion", tags=["Verificación"])
 
 @app.get("/")
 def read_root():

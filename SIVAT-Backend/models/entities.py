@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Float, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, Float, Boolean, ForeignKey
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from models.base import Base
@@ -38,6 +38,39 @@ class Afirmacion(Base):
     fecha_extraccion = Column(DateTime(timezone=True), server_default=func.now())
     
     fuente = relationship("FuenteExterna")
+
+class EvaluacionIA(Base):
+    """
+    Resultado del motor de IA sobre una Afirmacion (Business Case, seccion 5.2:
+    "Formalizacion del nivel de confianza explicable"). Se guarda desagregado
+    a proposito -- nunca una cifra unica ni un veredicto verdadero/falso (RNF-08).
+
+    Por ahora solo el clasificador de senal (TF-IDF + Random Forest, ver ml/)
+    esta conectado, asi que los campos de evidencia (que dependen del modulo
+    RAG, E2 del Acta de Alcance, aun no construido) quedan nullable hasta que
+    ese modulo exista.
+    """
+    __tablename__ = "evaluacion_ia"
+    id = Column(Integer, primary_key=True, index=True)
+    afirmacion_id = Column(Integer, ForeignKey("afirmacion.id"), nullable=False)
+
+    # Señal del clasificador de patrones de desinformación (ml/entrenar_clasificador.py)
+    probabilidad_desinformacion = Column(Float, nullable=False)
+    version_modelo = Column(String(100), nullable=False)  # RNF-07: trazabilidad del modelo usado
+
+    # Desagregado de evidencia (Business Case 5.2) -- pendiente del módulo RAG (E2)
+    nivel_evidencia_disponible = Column(String(20), nullable=True)  # Alto/Medio/Bajo
+    fuentes_coincidentes = Column(Integer, nullable=True)
+    fuentes_contradictorias = Column(Integer, nullable=True)
+    fuente_oficial_encontrada = Column(Boolean, nullable=True)
+    cobertura_evidencia = Column(String(20), nullable=True)
+
+    # RESTRICCIÓN ÉTICA: jamás "verdadero/falso" -- solo una recomendación de proceso
+    recomendacion_sistema = Column(String(100), nullable=False, default="Requiere validación periodística")
+    fecha_evaluacion = Column(DateTime(timezone=True), server_default=func.now())
+
+    afirmacion = relationship("Afirmacion")
+
 
 class DecisionEditorial(Base):
     __tablename__ = "decision_editorial"
