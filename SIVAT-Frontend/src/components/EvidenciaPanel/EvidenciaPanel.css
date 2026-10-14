@@ -1,0 +1,159 @@
+.evidencia {
+  /* Neutros y el azul de acción de SIVAT: la evidencia no lleva verde/rojo,
+     para no presentar la calificación de un tercero como veredicto. */
+  --evidencia-fondo: #f5f7fa;
+  --evidencia-borde: #e1e0d9;
+  --evidencia-texto: #0b0b0b;
+  --evidencia-texto-2: #52514e;
+  --evidencia-muted: #898781;
+  --evidencia-accion: #1c527e;
+  --evidencia-chip: #eef4fa;
+
+  background-color: var(--evidencia-fondo);
+  border: 1px solid var(--evidencia-borde);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--evidencia-texto);
+}
+
+.evidencia-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.evidencia-titulo {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--evidencia-texto);
+}
+
+.evidencia-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.evidencia-chip {
+  background-color: var(--evidencia-chip);
+  color: var(--evidencia-accion);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+.evidencia-razones {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  line-height: 1.45;
+  color: var(--evidencia-texto-2);
+}
+
+.evidencia-detalle summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--evidencia-accion);
+}
+
+.evidencia-grupo {
+  margin-top: 10px;
+}
+
+.evidencia-grupo-titulo {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--evidencia-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 6px;
+}
+
+.evidencia-grupo ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.evidencia-grupo li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.evidencia-item-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  font-size: 11px;
+}
+
+.evidencia-origen {
+  font-weight: 700;
+  color: var(--evidencia-texto);
+}
+
+.evidencia-calificacion {
+  background-color: #fff;
+  border: 1px solid var(--evidencia-borde);
+  border-radius: 4px;
+  padding: 0 6px;
+  color: var(--evidencia-texto-2);
+}
+
+.evidencia-similitud {
+  color: var(--evidencia-muted);
+}
+
+.evidencia-grupo a {
+  color: var(--evidencia-accion);
+  text-decoration: none;
+  line-height: 1.4;
+}
+
+.evidencia-grupo a:hover {
+  text-decoration: underline;
+}
+
+.evidencia-pie,
+.evidencia-vacia {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: var(--evidencia-muted);
+}
+
+.evidencia-pie button,
+.evidencia-vacia button {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--evidencia-borde);
+  background-color: #fff;
+  color: var(--evidencia-accion);
+  cursor: pointer;
+}
+
+.evidencia-pie button:disabled,
+.evidencia-vacia button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

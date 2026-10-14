@@ -80,7 +80,9 @@ async def enviar_a_validacion(feed_id: int, db: AsyncSession = Depends(get_db)):
     texto = "\n".join(p for p in partes if p).strip()[:MAX_LARGO_TEXTO]
 
     try:
-        afirmacion, evaluacion = await evaluar_y_guardar(db, texto, fuente_id=fuente.id)
+        afirmacion, evaluacion, evidencias = await evaluar_y_guardar(
+            db, texto, fuente_id=fuente.id, excluir_identificador=noticia.identificador_externo
+        )
     except RuntimeError as e:
         logger.error(f"Clasificador no disponible: {e}")
         raise HTTPException(status_code=503, detail=str(e))
@@ -94,7 +96,7 @@ async def enviar_a_validacion(feed_id: int, db: AsyncSession = Depends(get_db)):
     # Avisa a los demás paneles abiertos que esta tarjeta ya está en validación
     await internacionales_bus.publish(serializar_feed(noticia))
 
-    return construir_respuesta(evaluacion, texto, fuente)
+    return construir_respuesta(evaluacion, texto, fuente, evidencias=evidencias)
 
 
 @router.get("/internacionales/stream")

@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from api import ingesta, internacionales, verificacion
 from db.session import async_session
+from services.evidencia_service import ingerir_verificadores
 from services.ingesta_service import (
     ingerir_bluesky_internacional,
     ingerir_gdelt_internacional,
@@ -71,6 +72,8 @@ CICLOS_SEGUNDO_PLANO = [
      settings.REDDIT_INGESTA_HABILITADA),
     ("ingesta-rss", ingerir_rss_medios, settings.INTERVAL_INGESTA_RSS_SEGUNDOS,
      settings.RSS_INGESTA_HABILITADA),
+    ("ingesta-verificadores", ingerir_verificadores, settings.INTERVAL_INGESTA_VERIFICADORES_SEGUNDOS,
+     settings.VERIFICADORES_INGESTA_HABILITADA),
     ("limpieza-feed", limpiar_feed_vencido, 3600, True),
 ]
 

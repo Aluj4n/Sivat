@@ -21,6 +21,18 @@ MEDIOS_RSS = [
     ("Euronews", "France", "https://es.euronews.com/rss"),
 ]
 
+# Verificadores con RSS público (probados). AFP Factual y Colombiacheck
+# bloquean su RSS; llegan por Google Fact Check. Formato: (nombre, url)
+VERIFICADORES_RSS = [
+    ("Maldito Bulo", "https://maldita.es/malditobulo/feed/"),
+    ("Chequeado", "https://chequeado.com/feed/"),
+    ("Factchequeado", "https://factchequeado.com/feed/"),
+    ("Fast Check", "https://fastcheck.cl/feed/"),
+    ("Ecuador Chequea", "https://ecuadorchequea.com/feed/"),
+    ("Cotejo", "https://cotejo.info/feed/"),
+    ("Verificado", "https://verificado.com.mx/feed/"),
+]
+
 # Subreddits en español (sin r/PERU). Reddit bloquea su API JSON sin OAuth,
 # pero el RSS de un multireddit trae todos en una sola petición.
 SUBREDDITS = ["noticias", "LatinoAmerica", "argentina", "mexico", "chile", "Colombia", "vzla", "es", "uruguay", "ecuador"]
@@ -37,21 +49,27 @@ class RSSService:
         feed = await asyncio.to_thread(feedparser.parse, response.content)
         return list(feed.entries)
 
-    async def fetch_medios(self) -> List[tuple]:
+    async def _fetch_varios(self, fuentes: List[tuple]) -> List[tuple]:
         """
-        Entradas de todos los medios como (entrada, medio, país). Un feed caído
-        solo se registra: no impide traer los demás.
+        Lee varios feeds a la vez; cada fuente es (url, *datos) y devuelve
+        (entrada, *datos). Un feed caído solo se registra: no frena a los demás.
         """
-        resultados = await asyncio.gather(
-            *(self.fetch(url) for _, _, url in MEDIOS_RSS), return_exceptions=True
-        )
+        resultados = await asyncio.gather(*(self.fetch(url) for url, *_ in fuentes), return_exceptions=True)
         entradas = []
-        for (medio, pais, url), resultado in zip(MEDIOS_RSS, resultados):
+        for (url, *datos), resultado in zip(fuentes, resultados):
             if isinstance(resultado, Exception):
-                logger.warning(f"[rss] No se pudo leer {medio} ({url}): {resultado!r}")
+                logger.warning(f"[rss] No se pudo leer {datos[0]} ({url}): {resultado!r}")
                 continue
-            entradas.extend((entrada, medio, pais) for entrada in resultado)
+            entradas.extend((entrada, *datos) for entrada in resultado)
         return entradas
+
+    async def fetch_medios(self) -> List[tuple]:
+        """Entradas de todos los medios como (entrada, medio, país)."""
+        return await self._fetch_varios([(url, medio, pais) for medio, pais, url in MEDIOS_RSS])
+
+    async def fetch_verificadores(self) -> List[tuple]:
+        """Entradas de todos los verificadores como (entrada, verificador)."""
+        return await self._fetch_varios([(url, nombre) for nombre, url in VERIFICADORES_RSS])
 
     async def fetch_reddit(self) -> List[Dict[str, Any]]:
         return await self.fetch(REDDIT_RSS_URL.format(subs="+".join(SUBREDDITS)))

@@ -35,6 +35,12 @@ class Settings(BaseSettings):
     REDDIT_INGESTA_HABILITADA: bool = True
     INTERVAL_INGESTA_RSS_SEGUNDOS: int = 300
     RSS_INGESTA_HABILITADA: bool = True
+    # Módulo RAG: verificadores por RSS cada 30 min (publican pocas veces al día)
+    INTERVAL_INGESTA_VERIFICADORES_SEGUNDOS: int = 1800
+    VERIFICADORES_INGESTA_HABILITADA: bool = True
+    # Clave propia para Google Fact Check; si no se define se usa la de YouTube
+    # (mismo proyecto de Google Cloud con ambas APIs habilitadas)
+    GOOGLE_FACTCHECK_API_KEY: Optional[str] = None
     # Horas que una noticia no validada permanece en el feed (minimización, Ley 29733)
     RETENCION_FEED_HORAS: int = 24
 

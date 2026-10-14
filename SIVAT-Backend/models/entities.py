@@ -45,6 +45,45 @@ class NoticiaFeed(Base):
     afirmacion_id = Column(Integer, ForeignKey("afirmacion.id"), nullable=True)
 
 
+class EvidenciaVerificacion(Base):
+    """
+    Base de conocimiento del módulo RAG (E2 del Acta de Alcance): verificaciones
+    ya publicadas por verificadores (RSS) o halladas en Google Fact Check.
+    Es contenido público y se conserva: una verificación sigue sirviendo meses
+    después, a diferencia del feed de noticias.
+    """
+    __tablename__ = "evidencia_verificacion"
+    id = Column(Integer, primary_key=True, index=True)
+    origen = Column(String(100), index=True)  # verificador, p. ej. 'Maldito Bulo'
+    via = Column(String(30))  # 'rss' | 'google_factcheck'
+    identificador_externo = Column(String(255), unique=True, index=True, nullable=False)
+    titulo = Column(String(500), nullable=False)
+    resumen = Column(Text, nullable=True)
+    # Calificación que dio el verificador (no SIVAT): Falso, Engañoso, Verdadero...
+    calificacion = Column(String(50), nullable=True)
+    url = Column(String(1000), nullable=True)
+    fecha_publicacion = Column(DateTime(timezone=True), nullable=True)
+    fecha_captura = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class EvidenciaAfirmacion(Base):
+    """
+    Evidencia encontrada para una afirmación al evaluarla. Es una copia (no una
+    FK) porque las noticias de medios salen del feed temporal, que se borra a
+    las 24 h, y la evidencia debe seguir visible para la decisión editorial.
+    """
+    __tablename__ = "evidencia_afirmacion"
+    id = Column(Integer, primary_key=True, index=True)
+    afirmacion_id = Column(Integer, ForeignKey("afirmacion.id"), nullable=False, index=True)
+    tipo = Column(String(20), nullable=False)  # 'verificacion' | 'medio'
+    origen = Column(String(100))
+    titulo = Column(String(500))
+    url = Column(String(1000), nullable=True)
+    calificacion = Column(String(50), nullable=True)
+    similitud = Column(Float, nullable=False)
+    fecha_publicacion = Column(DateTime(timezone=True), nullable=True)
+
+
 class Tendencia(Base):
     __tablename__ = "tendencia"
     id = Column(Integer, primary_key=True, index=True)

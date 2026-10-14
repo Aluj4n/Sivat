@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import EvidenciaPanel, { type Evidencia } from '../components/EvidenciaPanel/EvidenciaPanel';
 import MedidorConfianza from '../components/MedidorConfianza/MedidorConfianza';
 import './Validacion.css';
 
@@ -22,11 +23,14 @@ interface Evaluacion {
   version_modelo: string;
   fuente_origen: string | null;
   url_original: string | null;
+  evidencia_buscada: boolean;
   nivel_evidencia_disponible: string | null;
   fuentes_coincidentes: number | null;
   fuentes_contradictorias: number | null;
   fuente_oficial_encontrada: boolean | null;
   cobertura_evidencia: string | null;
+  explicacion: string[];
+  evidencias: Evidencia[];
   fecha_evaluacion?: string;
   decision?: DecisionInfo | null;
 }
@@ -43,6 +47,7 @@ export default function Validacion() {
   const [cola, setCola] = useState<Evaluacion[]>([]);
   const [cargandoCola, setCargandoCola] = useState(true);
   const [decidiendoId, setDecidiendoId] = useState<number | null>(null);
+  const [buscandoEvidenciaId, setBuscandoEvidenciaId] = useState<number | null>(null);
 
   const cargarCola = useCallback(async () => {
     try {
@@ -101,6 +106,20 @@ export default function Validacion() {
       console.error('Error al registrar decisión', err);
     } finally {
       setDecidiendoId(null);
+    }
+  };
+
+  const handleBuscarEvidencia = async (afirmacionId: number) => {
+    setBuscandoEvidenciaId(afirmacionId);
+    try {
+      const response = await fetch(`${API_BASE}/${afirmacionId}/evidencia`, { method: 'POST' });
+      if (!response.ok) throw new Error('No se pudo buscar evidencia');
+      const actualizada: Evaluacion = await response.json();
+      setCola((prev) => prev.map((e) => (e.afirmacion_id === afirmacionId ? actualizada : e)));
+    } catch (err) {
+      console.error('Error al buscar evidencia', err);
+    } finally {
+      setBuscandoEvidenciaId(null);
     }
   };
 
@@ -187,6 +206,16 @@ export default function Validacion() {
                     </button>
                   </div>
                 </div>
+                <EvidenciaPanel
+                  evidenciaBuscada={e.evidencia_buscada}
+                  nivel={e.nivel_evidencia_disponible}
+                  coincidentes={e.fuentes_coincidentes}
+                  contradictorias={e.fuentes_contradictorias}
+                  explicacion={e.explicacion}
+                  evidencias={e.evidencias}
+                  buscando={buscandoEvidenciaId === e.afirmacion_id}
+                  onBuscar={() => handleBuscarEvidencia(e.afirmacion_id)}
+                />
               </li>
             );
           })}
