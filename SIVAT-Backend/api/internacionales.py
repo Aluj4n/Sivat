@@ -13,6 +13,7 @@ from core.config import settings
 from core.eventbus import internacionales_bus
 from db.session import get_db
 from models.entities import FuenteExterna, NoticiaFeed
+from services.contenido_service import obtener_contenido, url_a_descargar
 from services.normalizacion import serializar_feed
 from services.verificacion_service import evaluar_y_guardar
 
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 # Cada cuántos segundos se envía un "ping" para mantener viva la conexión SSE
 SSE_HEARTBEAT_SEGUNDOS = 15
-MAX_LARGO_TEXTO = 5000
+MAX_LARGO_TEXTO = 20000
 
 
 @router.get("/internacionales")
@@ -74,14 +75,24 @@ async def enviar_a_validacion(feed_id: int, db: AsyncSession = Depends(get_db)):
         db.add(fuente)
         await db.flush()
 
-    partes = [noticia.titular or ""]
-    if noticia.texto_procesado and noticia.texto_procesado != noticia.titular:
-        partes.append(noticia.texto_procesado)
-    texto = "\n".join(p for p in partes if p).strip()[:MAX_LARGO_TEXTO]
+    # El modelo necesita el artículo completo: se descarga solo ahora, para la
+    # noticia elegida. Si no se puede, se sigue con el titular y el resumen.
+    titular = (noticia.titular or "").strip()
+    url = url_a_descargar(noticia.origen, noticia.url_original, noticia.metadatos)
+    contenido = await obtener_contenido(url) if url else None
+    if contenido:
+        cuerpo = contenido.texto
+        fuente.texto_procesado = contenido.texto
+    elif noticia.texto_procesado and noticia.texto_procesado != titular:
+        cuerpo = noticia.texto_procesado
+    else:
+        cuerpo = ""
+    texto = "\n".join(p for p in (titular, cuerpo) if p).strip()[:MAX_LARGO_TEXTO]
 
     try:
         afirmacion, evaluacion, evidencias = await evaluar_y_guardar(
-            db, texto, fuente_id=fuente.id, excluir_identificador=noticia.identificador_externo
+            db, texto, fuente_id=fuente.id, excluir_identificador=noticia.identificador_externo,
+            texto_busqueda=titular or None,
         )
     except RuntimeError as e:
         logger.error(f"Clasificador no disponible: {e}")

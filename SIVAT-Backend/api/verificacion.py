@@ -1,17 +1,22 @@
+import json
 import logging
 from collections import defaultdict
 from datetime import datetime
 from typing import List, Literal, Optional
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.config import settings
 from db.session import get_db
 from models.entities import Afirmacion, DecisionEditorial, EvaluacionIA, EvidenciaAfirmacion, FuenteExterna
 from services.clasificador_service import clasificar_senal
-from services.evidencia_service import buscar_y_guardar_evidencia, explicar
+from services.contenido_service import Contenido, es_url, obtener_contenido
+from services.evidencia_service import buscar_y_guardar_evidencia, explicar, titular_de
+from services.normalizacion import _identificador, _recortar
 from services.verificacion_service import evaluar_y_guardar
 
 router = APIRouter()
@@ -19,7 +24,10 @@ logger = logging.getLogger(__name__)
 
 
 class AnalizarRequest(BaseModel):
-    texto: str = Field(..., min_length=10, max_length=5000, description="Afirmación o noticia a evaluar")
+    texto: str = Field(
+        ..., min_length=10, max_length=20000,
+        description="Afirmación o noticia a evaluar, o el enlace a la noticia (se descarga su contenido)",
+    )
 
 
 class DecisionInfo(BaseModel):
@@ -50,7 +58,10 @@ class EvaluacionResponse(BaseModel):
     # Lo que muestra el medidor: 100 - probabilidad de desinformación, en %.
     # Mide patrones de redacción, no verifica hechos (por eso siempre va con
     # recomendacion_sistema y nunca como "verdadero/falso", RNF-08).
-    confianza_modelo: int
+    # Null si el texto es muy corto para el modelo (texto_suficiente=False).
+    confianza_modelo: Optional[int]
+    texto_suficiente: bool
+    palabras_analizadas: int
     senal: str
     recomendacion_sistema: str
     version_modelo: str
@@ -87,12 +98,18 @@ def construir_respuesta(
     probabilidad = evaluacion.probabilidad_desinformacion
     evidencias = sorted(evidencias or [], key=lambda e: e.similitud, reverse=True)
     evidencia_buscada = evaluacion.nivel_evidencia_disponible is not None
+    palabras = len(texto.split())
+    # Con textos cortos el modelo marca casi todo como desinformación (ver
+    # MIN_PALABRAS_MODELO): no se muestra un porcentaje que no mide nada
+    suficiente = palabras >= settings.MIN_PALABRAS_MODELO
     return EvaluacionResponse(
         afirmacion_id=evaluacion.afirmacion_id,
         texto=texto,
         probabilidad_desinformacion=round(probabilidad, 4),
-        confianza_modelo=round((1 - probabilidad) * 100),
-        senal=clasificar_senal(probabilidad),
+        confianza_modelo=round((1 - probabilidad) * 100) if suficiente else None,
+        texto_suficiente=suficiente,
+        palabras_analizadas=palabras,
+        senal=clasificar_senal(probabilidad) if suficiente else "Texto insuficiente para el modelo",
         recomendacion_sistema=evaluacion.recomendacion_sistema,
         version_modelo=evaluacion.version_modelo,
         fecha_evaluacion=evaluacion.fecha_evaluacion,
@@ -104,7 +121,10 @@ def construir_respuesta(
         fuente_oficial_encontrada=evaluacion.fuente_oficial_encontrada,
         cobertura_evidencia=evaluacion.cobertura_evidencia,
         evidencia_buscada=evidencia_buscada,
-        explicacion=explicar(probabilidad, evidencias, fuente.origen if fuente else None) if evidencia_buscada else [],
+        explicacion=(
+            explicar(probabilidad, evidencias, fuente.origen if fuente else None, suficiente)
+            if evidencia_buscada else []
+        ),
         evidencias=[EvidenciaInfo.model_validate(e) for e in evidencias],
         decision=DecisionInfo.model_validate(decision) if decision else None,
     )
@@ -114,11 +134,30 @@ def construir_respuesta(
 async def analizar_afirmacion(payload: AnalizarRequest, db: AsyncSession = Depends(get_db)):
     """
     Ejecuta el clasificador sobre un texto ingresado a mano y persiste la
-    Afirmacion + su EvaluacionIA. `recomendacion_sistema` siempre exige
-    validación periodística, sin importar el resultado.
+    Afirmacion + su EvaluacionIA. Si se pega un enlace, se descarga el
+    artículo y se registra como FuenteExterna (trazabilidad, RNF-06).
+    `recomendacion_sistema` siempre exige validación periodística.
     """
+    texto = payload.texto.strip()
+    fuente: Optional[FuenteExterna] = None
+    texto_busqueda: Optional[str] = None
+    if es_url(texto):
+        contenido = await obtener_contenido(texto)
+        if contenido is None:
+            raise HTTPException(
+                status_code=422,
+                detail="No se pudo extraer el contenido del enlace (sitio bloqueado, muro de pago o video). Pega el texto.",
+            )
+        fuente = await _fuente_de_enlace(db, contenido)
+        texto_busqueda = contenido.titulo or None
+        texto = "\n".join(p for p in (contenido.titulo, contenido.texto) if p)
+
     try:
-        _, evaluacion, evidencias = await evaluar_y_guardar(db, payload.texto)
+        _, evaluacion, evidencias = await evaluar_y_guardar(
+            db, texto, fuente_id=fuente.id if fuente else None,
+            excluir_identificador=fuente.identificador_externo if fuente else None,
+            texto_busqueda=texto_busqueda,
+        )
     except RuntimeError as e:
         logger.error(f"Clasificador no disponible: {e}")
         raise HTTPException(status_code=503, detail=str(e))
@@ -128,7 +167,27 @@ async def analizar_afirmacion(payload: AnalizarRequest, db: AsyncSession = Depen
 
     await db.commit()
     await db.refresh(evaluacion)
-    return construir_respuesta(evaluacion, payload.texto, evidencias=evidencias)
+    return construir_respuesta(evaluacion, texto, fuente, evidencias=evidencias)
+
+
+async def _fuente_de_enlace(db: AsyncSession, contenido: Contenido) -> FuenteExterna:
+    identificador = _identificador(contenido.url)
+    existente = (await db.execute(
+        select(FuenteExterna).where(FuenteExterna.identificador_externo == identificador)
+    )).scalar_one_or_none()
+    if existente:
+        return existente
+    fuente = FuenteExterna(
+        origen=_recortar(urlparse(contenido.url).netloc.removeprefix("www."), 50) or "Enlace manual",
+        identificador_externo=identificador,
+        titular=_recortar(contenido.titulo, 500),
+        texto_procesado=contenido.texto,
+        url_original=_recortar(contenido.url, 1000),
+        metadatos=json.dumps({"via": "enlace_manual"}),
+    )
+    db.add(fuente)
+    await db.flush()
+    return fuente
 
 
 @router.get("/recientes", response_model=list[EvaluacionResponse])
@@ -198,7 +257,7 @@ async def buscar_evidencia(afirmacion_id: int, db: AsyncSession = Depends(get_db
 
     try:
         evidencias = await buscar_y_guardar_evidencia(
-            db, evaluacion, contenido, fuente.identificador_externo if fuente else None
+            db, evaluacion, titular_de(contenido), fuente.identificador_externo if fuente else None
         )
     except Exception:
         logger.error("Error al buscar evidencia", exc_info=True)

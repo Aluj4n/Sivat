@@ -73,3 +73,16 @@
 .medidor.is-compacto .medidor-pista {
   height: 6px;
 }
+
+.medidor-aviso {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--medidor-texto-2);
+  background-color: var(--medidor-pista);
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+
+.medidor.is-insuficiente .medidor-valor {
+  color: var(--medidor-muted);
+}

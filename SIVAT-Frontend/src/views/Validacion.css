@@ -145,6 +145,26 @@
   line-height: 1.4;
 }
 
+.cola-cuerpo {
+  margin: 0 0 6px 0;
+  font-size: 12px;
+}
+
+.cola-cuerpo summary {
+  cursor: pointer;
+  color: #1c527e;
+  font-weight: 700;
+}
+
+.cola-cuerpo p {
+  white-space: pre-line;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  max-height: 280px;
+  overflow-y: auto;
+  margin: 8px 0 0 0;
+}
+
 .cola-meta {
   font-size: 11px;
   color: var(--text-muted);

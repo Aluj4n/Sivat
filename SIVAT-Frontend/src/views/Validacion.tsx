@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import EvidenciaPanel, { type Evidencia } from '../components/EvidenciaPanel/EvidenciaPanel';
 import MedidorConfianza from '../components/MedidorConfianza/MedidorConfianza';
+import { titularDe } from '../utils/texto';
 import './Validacion.css';
 
 const API_BASE = '/api/v1/verificacion';
@@ -17,7 +18,9 @@ interface Evaluacion {
   afirmacion_id: number;
   texto: string;
   probabilidad_desinformacion: number;
-  confianza_modelo: number;
+  confianza_modelo: number | null;
+  texto_suficiente: boolean;
+  palabras_analizadas: number;
   senal: string;
   recomendacion_sistema: string;
   version_modelo: string;
@@ -38,6 +41,22 @@ interface Evaluacion {
 function formatearFecha(iso?: string): string {
   if (!iso) return '';
   return new Date(iso).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+function TextoAnalizado({ evaluacion }: { evaluacion: Evaluacion }) {
+  const titular = titularDe(evaluacion.texto);
+  const cuerpo = evaluacion.texto.slice(evaluacion.texto.indexOf(titular) + titular.length).trim();
+  return (
+    <>
+      <p className="cola-texto">{titular}</p>
+      {cuerpo && (
+        <details className="cola-cuerpo">
+          <summary>Ver texto analizado ({evaluacion.palabras_analizadas} palabras)</summary>
+          <p>{cuerpo}</p>
+        </details>
+      )}
+    </>
+  );
 }
 
 export default function Validacion() {
@@ -141,7 +160,7 @@ export default function Validacion() {
         <textarea
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
-          placeholder="Pega aquí el texto de la afirmación o rumor a evaluar…"
+          placeholder="Pega el texto de la noticia o rumor, o el enlace a la noticia (se descarga su contenido)…"
           rows={4}
         />
         <div className="analizar-footer">
@@ -166,7 +185,7 @@ export default function Validacion() {
             return (
               <li key={e.afirmacion_id} className="cola-item">
                 <div className="cola-info">
-                  <p className="cola-texto">{e.texto}</p>
+                  <TextoAnalizado evaluacion={e} />
                   <span className="cola-meta">
                     {e.fuente_origen ? `${e.fuente_origen} · ` : 'Ingreso manual · '}
                     {formatearFecha(e.fecha_evaluacion)} · modelo {e.version_modelo}
@@ -181,7 +200,7 @@ export default function Validacion() {
                   </span>
                 </div>
                 <div className="cola-acciones">
-                  <MedidorConfianza confianza={e.confianza_modelo} />
+                  <MedidorConfianza confianza={e.confianza_modelo} palabras={e.palabras_analizadas} />
                   <div className="cola-botones">
                     <button
                       type="button"
@@ -230,9 +249,10 @@ export default function Validacion() {
             {validadas.map((e) => (
               <li key={e.afirmacion_id} className="cola-item">
                 <div className="cola-info">
-                  <p className="cola-texto">{e.texto}</p>
+                  <p className="cola-texto">{titularDe(e.texto)}</p>
                   <span className="cola-meta">
-                    Confianza del modelo: {e.confianza_modelo}% · {formatearFecha(e.fecha_evaluacion)}
+                    Confianza del modelo: {e.confianza_modelo === null ? 'texto insuficiente' : `${e.confianza_modelo}%`} ·{' '}
+                    {formatearFecha(e.fecha_evaluacion)}
                   </span>
                 </div>
                 <span className={`decision-badge decision-${e.decision!.decision_periodista.toLowerCase()}`}>

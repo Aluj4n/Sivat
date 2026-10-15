@@ -117,7 +117,7 @@ class EvaluacionIA(Base):
     id = Column(Integer, primary_key=True, index=True)
     afirmacion_id = Column(Integer, ForeignKey("afirmacion.id"), nullable=False)
 
-    # Señal del clasificador de patrones de desinformación (ml/entrenar_clasificador.py)
+    # Señal del clasificador de patrones de desinformación (ml/entrenar_modelos.py, Modelo A)
     probabilidad_desinformacion = Column(Float, nullable=False)
     version_modelo = Column(String(100), nullable=False)  # RNF-07: trazabilidad del modelo usado
 

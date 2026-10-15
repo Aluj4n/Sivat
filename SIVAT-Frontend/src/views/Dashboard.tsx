@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import MedidorConfianza from '../components/MedidorConfianza/MedidorConfianza';
+import { titularDe } from '../utils/texto';
 import './Dashboard.css';
 
 // Dashboard principal de SIVAT. Los KPIs y la "cola de validación" ya usan
@@ -22,7 +23,8 @@ interface Evaluacion {
   afirmacion_id: number;
   texto: string;
   probabilidad_desinformacion: number;
-  confianza_modelo: number;
+  confianza_modelo: number | null;
+  palabras_analizadas: number;
   senal: string;
   recomendacion_sistema: string;
   version_modelo: string;
@@ -279,13 +281,13 @@ export default function Dashboard() {
               return (
                 <li key={e.afirmacion_id} className="validacion-item">
                   <div className="validacion-info">
-                    <p className="validacion-afirmacion">{e.texto}</p>
+                    <p className="validacion-afirmacion">{titularDe(e.texto)}</p>
                     <span className="validacion-fuente">
                       {e.fuente_origen ?? 'Ingreso manual'} · {formatearFecha(e.fecha_evaluacion)}
                     </span>
                   </div>
                   <div className="validacion-acciones">
-                    <MedidorConfianza confianza={e.confianza_modelo} compacto />
+                    <MedidorConfianza confianza={e.confianza_modelo} palabras={e.palabras_analizadas} compacto />
                     <div className="validacion-botones">
                       <button
                         type="button"

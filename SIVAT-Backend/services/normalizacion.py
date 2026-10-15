@@ -152,6 +152,15 @@ def _imagen_bluesky(embed: Optional[Dict[str, Any]]) -> Optional[str]:
     return (embed.get("external") or {}).get("thumb")
 
 
+def _enlace_bluesky(embed: Optional[Dict[str, Any]]) -> Optional[str]:
+    # Noticia que comparte el post (tarjeta de enlace), también dentro de una cita
+    if not embed:
+        return None
+    if embed.get("media"):
+        embed = embed["media"]
+    return (embed.get("external") or {}).get("uri")
+
+
 def normalizar_bluesky(post: Dict[str, Any]) -> Dict[str, Any]:
     registro = post.get("record") or {}
     texto = (registro.get("text") or "").strip()
@@ -168,9 +177,11 @@ def normalizar_bluesky(post: Dict[str, Any]) -> Dict[str, Any]:
         "url_original": url,
         "pais": _pais_salvo_peru(texto, "INTL"),
         "fecha_publicacion": _fecha_iso(registro.get("createdAt")),
-        # Sin autor (Ley 29733); el alcance sirve luego para medir viralidad
+        # Sin autor (Ley 29733); el alcance sirve luego para medir viralidad.
+        # enlace_externo: la noticia compartida, para descargarla al validar
         "metadatos": json.dumps({
             "likes": post.get("likeCount"), "reposts": post.get("repostCount"), "respuestas": post.get("replyCount"),
+            "enlace_externo": _enlace_bluesky(post.get("embed")),
         }),
     }
 
@@ -184,11 +195,16 @@ PAIS_POR_SUBREDDIT = {
 _RE_ENLACE_REDDIT = re.compile(r'<a href="([^"]+)">\[link\]</a>')
 
 
+def _enlace_reddit(entrada: Dict[str, Any]) -> Optional[str]:
+    enlace = _RE_ENLACE_REDDIT.search(entrada.get("summary") or "")
+    return html.unescape(enlace.group(1)) if enlace else None
+
+
 def es_post_reddit_de_texto(entrada: Dict[str, Any]) -> bool:
     # El [link] de un post de solo texto apunta al propio hilo; los que enlazan
     # una noticia externa o una imagen/video son los que circulan como noticia
-    enlace = _RE_ENLACE_REDDIT.search(entrada.get("summary") or "")
-    return not enlace or "reddit.com/r/" in enlace.group(1)
+    enlace = _enlace_reddit(entrada)
+    return not enlace or "reddit.com/r/" in enlace
 
 
 def normalizar_reddit(entrada: Dict[str, Any]) -> Dict[str, Any]:
@@ -205,7 +221,8 @@ def normalizar_reddit(entrada: Dict[str, Any]) -> Dict[str, Any]:
         "url_original": _recortar(entrada.get("link"), 1000),
         "pais": _pais_salvo_peru(titulo, pais),
         "fecha_publicacion": _fecha_feed(entrada),
-        "metadatos": json.dumps({"subreddit": subreddit}, ensure_ascii=False),
+        # enlace_externo: la noticia compartida, para descargarla al validar
+        "metadatos": json.dumps({"subreddit": subreddit, "enlace_externo": _enlace_reddit(entrada)}, ensure_ascii=False),
     }
 
 

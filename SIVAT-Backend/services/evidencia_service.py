@@ -28,11 +28,12 @@ from services.rss_service import MEDIOS_RSS, RSSService
 logger = logging.getLogger(__name__)
 
 # Umbrales de similitud coseno (TF-IDF 1-2 gramas), calibrados con casos
-# reales: lo no relacionado queda < 0.10. Las verificaciones usan un umbral
+# reales: lo no relacionado queda < 0.13 y otra cobertura del mismo hecho,
+# redactada distinto, ronda 0.25. Las verificaciones usan un umbral
 # menor porque reformulan la afirmación ("Es falso que...") y Google las
 # devuelve con el título recortado.
 UMBRAL_VERIFICACION = 0.15
-UMBRAL_MEDIO = 0.30
+UMBRAL_MEDIO = 0.20
 MAX_POR_TIPO = 5
 MAX_VERIFICACIONES_CORPUS = 5000
 
@@ -159,6 +160,14 @@ class Candidato:
     calificacion: Optional[str]
     fecha_publicacion: Optional[datetime]
     texto: str
+
+
+def titular_de(texto: str) -> str:
+    """
+    Primera línea con contenido: el titular cuando el texto es titular + cuerpo.
+    El RAG compara afirmaciones, y con el artículo completo la similitud se diluye.
+    """
+    return next((linea.strip() for linea in texto.splitlines() if linea.strip()), "")[:500]
 
 
 def consulta_factcheck(texto: str, max_palabras: int = 6) -> str:
@@ -312,7 +321,10 @@ def _desagregar(evaluacion: EvaluacionIA, evidencias: List[EvidenciaAfirmacion])
 
 
 def explicar(
-    probabilidad: float, evidencias: List[EvidenciaAfirmacion], fuente_origen: Optional[str]
+    probabilidad: float,
+    evidencias: List[EvidenciaAfirmacion],
+    fuente_origen: Optional[str],
+    texto_suficiente: bool = True,
 ) -> List[str]:
     """
     El "por qué" bajo el medidor (opción D). Cada razón describe evidencia o
@@ -344,7 +356,9 @@ def explicar(
     if fuente_origen in ORIGENES_SOCIALES:
         razones.append(f"Proviene de {fuente_origen} (red social): identificar la fuente primaria antes de difundir.")
 
-    if probabilidad >= 0.66:
+    if not texto_suficiente:
+        razones.append("El texto es muy corto para el modelo de redacción: decidir con la evidencia.")
+    elif probabilidad >= 0.66:
         razones.append("La redacción tiene patrones frecuentes en textos de desinformación (modelo de texto).")
     elif probabilidad <= 0.33:
         razones.append("La redacción se parece a la de noticias confiables; esto no confirma los hechos.")

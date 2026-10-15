@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     # Clave propia para Google Fact Check; si no se define se usa la de YouTube
     # (mismo proyecto de Google Cloud con ambas APIs habilitadas)
     GOOGLE_FACTCHECK_API_KEY: Optional[str] = None
+    # Palabras mínimas para mostrar el resultado del modelo de texto. Medido
+    # sobre el corpus: con menos de ~200 palabras casi todo le parece
+    # desinformación (aprendió que las falsas eran más cortas).
+    MIN_PALABRAS_MODELO: int = 200
     # Horas que una noticia no validada permanece en el feed (minimización, Ley 29733)
     RETENCION_FEED_HORAS: int = 24
 
