@@ -6,13 +6,13 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import settings
-from core.eventbus import internacionales_bus
+from core.eventbus import feed_bus
 from models.entities import FuenteExterna, NoticiaFeed
 from services.bluesky_service import BlueskyService
 from services.gdelt_service import GDELTService
 from services.normalizacion import (
-    es_noticia_peruana,
     es_post_reddit_de_texto,
+    es_seccion_descartada,
     normalizar_bluesky,
     normalizar_gdelt,
     normalizar_gdelt_gkg,
@@ -30,15 +30,23 @@ logger = logging.getLogger(__name__)
 
 QUERY_GDELT_INTL_DEFAULT = "sourcelang:spanish -peru"
 QUERY_X_INTL_DEFAULT = "world news OR rumor -peru"
-# Búsqueda amplia (operadores | y - de YouTube): todo lo noticioso en español, sin Perú
+# Búsquedas amplias (operadores | y - de YouTube): todo lo noticioso en
+# español sin Perú, y lo de Perú aparte para que no lo tape lo internacional
 QUERY_YOUTUBE_INTL_DEFAULT = "noticias|última hora|internacional|news -peru -perú"
+QUERY_YOUTUBE_PERU = "noticias perú|perú|peruanos|lima perú"
+# La cuota de YouTube alcanza para una búsqueda cada 15 min: se alternan las
+# dos, así cada panel recibe una cada 30 min sin pedir más cuota a Google
+BUSQUEDAS_YOUTUBE = [(QUERY_YOUTUBE_INTL_DEFAULT, "INTL"), (QUERY_YOUTUBE_PERU, "Peru")]
 
-# Bluesky no admite OR: una búsqueda por término (deduplicadas al guardar)
+# Bluesky no admite OR: una búsqueda por término (deduplicadas al guardar).
+# Los de Perú alimentan ese panel; el país lo decide el texto del post.
 TERMINOS_BLUESKY = ["noticias", "urgente", "rumor", "alerta", "denuncian", "confirmado", "viral", "falso"]
+TERMINOS_BLUESKY_PERU = ["Perú", "peruanos", "Lima"]
 LARGO_MINIMO_POST = 40
 
 # Hasta dónde mirar atrás en la primera búsqueda tras arrancar el backend
-_ultima_busqueda_youtube: datetime | None = None
+_ultima_busqueda_youtube: Dict[str, datetime] = {}
+_turno_youtube = 0
 _ultima_busqueda_bluesky: datetime | None = None
 
 
@@ -71,8 +79,9 @@ async def guardar_registros(db: AsyncSession, registros: List[Dict[str, Any]]) -
 
 async def guardar_en_feed(db: AsyncSession, registros: List[Dict[str, Any]]) -> int:
     """
-    Guarda en el feed temporal solo lo internacional y aún no visto, y lo
-    publica por SSE para que aparezca primero en el panel sin recargar.
+    Guarda en el feed temporal lo aún no visto (Perú e internacional: el
+    país decide el panel) y lo publica por SSE para que aparezca primero en
+    su panel sin recargar.
     """
     # Los RSS repiten artículos de días atrás: lo que ya superó la retención
     # volvería a entrar tras cada limpieza, así que se descarta aquí.
@@ -80,7 +89,7 @@ async def guardar_en_feed(db: AsyncSession, registros: List[Dict[str, Any]]) -> 
     registros_validos = [
         r for r in registros
         if r.get("identificador_externo")
-        and not es_noticia_peruana(r)
+        and not es_seccion_descartada(r.get("url_original"))
         and not (r.get("fecha_publicacion") and r["fecha_publicacion"] < limite)
     ]
     if not registros_validos:
@@ -108,7 +117,7 @@ async def guardar_en_feed(db: AsyncSession, registros: List[Dict[str, Any]]) -> 
     await db.commit()
     for noticia in nuevas:
         await db.refresh(noticia)
-        await internacionales_bus.publish(serializar_feed(noticia))
+        await feed_bus.publish(serializar_feed(noticia))
 
     return len(nuevas)
 
@@ -128,19 +137,28 @@ async def ingerir_gdelt_doc_api(db: AsyncSession, query: str = QUERY_GDELT_INTL_
     return await guardar_en_feed(db, [normalizar_gdelt(articulo) for articulo in data])
 
 
-async def ingerir_youtube_internacional(db: AsyncSession, query: str = QUERY_YOUTUBE_INTL_DEFAULT) -> int:
+async def ingerir_youtube_internacional(db: AsyncSession, query: str | None = None) -> int:
     """
-    Trae todo lo publicado desde la búsqueda anterior (máx. 50 por llamada),
-    así cada consulta suma videos nuevos en vez de repetir los mismos.
+    Trae todo lo publicado desde la búsqueda anterior con la misma consulta
+    (máx. 50 por llamada), así cada una suma videos nuevos en vez de repetir.
+    Sin `query`, alterna en cada ciclo entre la búsqueda internacional y la
+    de Perú.
     """
-    global _ultima_busqueda_youtube
+    global _turno_youtube
+
+    if query is None:
+        query, pais = BUSQUEDAS_YOUTUBE[_turno_youtube % len(BUSQUEDAS_YOUTUBE)]
+        _turno_youtube += 1
+    else:
+        pais = "INTL"
 
     ahora = datetime.now(timezone.utc)
-    desde = _ultima_busqueda_youtube or ahora - timedelta(seconds=settings.INTERVAL_INGESTA_YOUTUBE_SEGUNDOS)
+    vuelta = settings.INTERVAL_INGESTA_YOUTUBE_SEGUNDOS * len(BUSQUEDAS_YOUTUBE)
+    desde = _ultima_busqueda_youtube.get(query) or ahora - timedelta(seconds=vuelta)
     data = await YouTubeService().search_publicados_desde(query=query, publicado_desde=desde)
-    _ultima_busqueda_youtube = ahora
+    _ultima_busqueda_youtube[query] = ahora
 
-    return await guardar_en_feed(db, [normalizar_youtube(item) for item in data])
+    return await guardar_en_feed(db, [normalizar_youtube(item, pais_default=pais) for item in data])
 
 
 async def ingerir_bluesky_internacional(db: AsyncSession) -> int:
@@ -153,7 +171,9 @@ async def ingerir_bluesky_internacional(db: AsyncSession) -> int:
 
     ahora = datetime.now(timezone.utc)
     desde = _ultima_busqueda_bluesky or ahora - timedelta(seconds=settings.INTERVAL_INGESTA_BLUESKY_SEGUNDOS)
-    data = await BlueskyService().search_publicados_desde(TERMINOS_BLUESKY, publicado_desde=desde)
+    data = await BlueskyService().search_publicados_desde(
+        TERMINOS_BLUESKY + TERMINOS_BLUESKY_PERU, publicado_desde=desde
+    )
     _ultima_busqueda_bluesky = ahora
 
     # Descarta posts muy cortos (saludos, reacciones): no hay afirmación que verificar
@@ -170,6 +190,7 @@ async def ingerir_reddit_internacional(db: AsyncSession) -> int:
 
 
 async def ingerir_rss_medios(db: AsyncSession) -> int:
+    # Peruanos y extranjeros; las secciones sin noticia se descartan en guardar_en_feed
     data = await RSSService().fetch_medios()
     return await guardar_en_feed(db, [normalizar_rss(entrada, medio, pais) for entrada, medio, pais in data])
 

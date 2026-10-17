@@ -21,6 +21,21 @@ MEDIOS_RSS = [
     ("Euronews", "France", "https://es.euronews.com/rss"),
 ]
 
+# Medios peruanos (probados) para el panel Perú. Su sección internacional va
+# a Internacionales (ver normalizacion._pais_medio_peruano). La República no
+# tiene feed general, solo por sección. Perú21 bloquea el RSS (403).
+MEDIOS_RSS_PERU = [
+    ("Canal N", "Peru", "https://canaln.pe/feed"),
+    ("RPP", "Peru", "https://rpp.pe/rss"),
+    ("Andina", "Peru", "https://andina.pe/agencia/rss/0.xml"),
+    ("El Comercio", "Peru", "https://elcomercio.pe/arcio/rss/"),
+    ("La República", "Peru", "https://larepublica.pe/rss/politica.xml"),
+    ("La República", "Peru", "https://larepublica.pe/rss/sociedad.xml"),
+    ("Gestión", "Peru", "https://gestion.pe/arcio/rss/"),
+    ("Correo", "Peru", "https://diariocorreo.pe/arcio/rss/"),
+    ("Infobae Perú", "Peru", "https://www.infobae.com/arc/outboundfeeds/rss/category/peru/?outputType=xml"),
+]
+
 # Verificadores con RSS público (probados). AFP Factual y Colombiacheck
 # bloquean su RSS; llegan por Google Fact Check. Formato: (nombre, url)
 VERIFICADORES_RSS = [
@@ -31,11 +46,12 @@ VERIFICADORES_RSS = [
     ("Ecuador Chequea", "https://ecuadorchequea.com/feed/"),
     ("Cotejo", "https://cotejo.info/feed/"),
     ("Verificado", "https://verificado.com.mx/feed/"),
+    ("Verificador LR", "https://larepublica.pe/rss/verificador.xml"),
 ]
 
-# Subreddits en español (sin r/PERU). Reddit bloquea su API JSON sin OAuth,
-# pero el RSS de un multireddit trae todos en una sola petición.
-SUBREDDITS = ["noticias", "LatinoAmerica", "argentina", "mexico", "chile", "Colombia", "vzla", "es", "uruguay", "ecuador"]
+# Subreddits en español. Reddit bloquea su API JSON sin OAuth, pero el RSS de
+# un multireddit trae todos en una sola petición (r/PERU va al panel Perú).
+SUBREDDITS = ["PERU", "noticias", "LatinoAmerica", "argentina", "mexico", "chile", "Colombia", "vzla", "es", "uruguay", "ecuador"]
 REDDIT_RSS_URL = "https://www.reddit.com/r/{subs}/new/.rss?limit=100"
 
 
@@ -64,8 +80,8 @@ class RSSService:
         return entradas
 
     async def fetch_medios(self) -> List[tuple]:
-        """Entradas de todos los medios como (entrada, medio, país)."""
-        return await self._fetch_varios([(url, medio, pais) for medio, pais, url in MEDIOS_RSS])
+        """Entradas de todos los medios, extranjeros y peruanos, como (entrada, medio, país)."""
+        return await self._fetch_varios([(url, medio, pais) for medio, pais, url in MEDIOS_RSS + MEDIOS_RSS_PERU])
 
     async def fetch_verificadores(self) -> List[tuple]:
         """Entradas de todos los verificadores como (entrada, verificador)."""

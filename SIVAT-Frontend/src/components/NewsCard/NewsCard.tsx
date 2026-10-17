@@ -1,12 +1,15 @@
 import React from 'react';
 import './NewsCard.css';
-import type { NoticiaInternacional } from '../../views/Internacionales';
+import type { NoticiaFeed } from '../PanelFeed/PanelFeed';
 
 interface Props {
-  noticia: NoticiaInternacional;
+  noticia: NoticiaFeed;
   validando: boolean;
-  onValidar: (noticia: NoticiaInternacional) => void;
+  onValidar: (noticia: NoticiaFeed) => void;
 }
+
+// En el panel Perú el país sobra; en Internacionales "INTL" no dice nada
+const PAISES_SIN_ETIQUETA = new Set(['intl', 'peru', 'perú', 'pe']);
 
 function tiempoRelativo(iso: string | null): string {
   if (!iso) return '';
@@ -34,8 +37,10 @@ const NewsCard: React.FC<Props> = ({ noticia, validando, onValidar }) => {
         <div className="news-card-tags">
           <span className="news-card-tag">
             {noticia.fuente_origen}
-            {noticia.pais && noticia.pais !== 'INTL' ? ` · ${noticia.pais}` : ''}
+            {noticia.pais && !PAISES_SIN_ETIQUETA.has(noticia.pais.toLowerCase()) ? ` · ${noticia.pais}` : ''}
           </span>
+          {/* El periodista ve de inmediato si el propio canal ya cubrió el tema */}
+          {noticia.fuente_origen === 'Canal N' && <span className="news-card-canal-n">Cobertura Canal N</span>}
           {noticia.en_validacion && <span className="news-card-estado">En validación</span>}
         </div>
         <h2 className="news-card-titular">{noticia.titular}</h2>

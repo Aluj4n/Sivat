@@ -4,17 +4,17 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy import select
+from sqlalchemy import func, not_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import StreamingResponse
 
 from api.verificacion import EvaluacionResponse, construir_respuesta
 from core.config import settings
-from core.eventbus import internacionales_bus
+from core.eventbus import feed_bus
 from db.session import get_db
 from models.entities import FuenteExterna, NoticiaFeed
 from services.contenido_service import obtener_contenido, url_a_descargar
-from services.normalizacion import serializar_feed
+from services.normalizacion import PAISES_PERU, serializar_feed
 from services.verificacion_service import evaluar_y_guardar
 
 router = APIRouter()
@@ -25,24 +25,36 @@ SSE_HEARTBEAT_SEGUNDOS = 15
 MAX_LARGO_TEXTO = 20000
 
 
-@router.get("/internacionales")
-async def obtener_internacionales(db: AsyncSession = Depends(get_db)):
+async def _feed_del_panel(db: AsyncSession, peru: bool) -> list:
     """
-    Feed temporal del panel Internacionales (GDELT + YouTube): solo lo
-    capturado en las últimas RETENCION_FEED_HORAS, más reciente primero.
-    Nada de esto está en FuenteExterna hasta que alguien lo valide.
+    Feed temporal de un panel: solo lo capturado en las últimas
+    RETENCION_FEED_HORAS, más reciente primero. Nada de esto está en
+    FuenteExterna hasta que alguien lo valide.
     """
     limite = datetime.now(timezone.utc) - timedelta(hours=settings.RETENCION_FEED_HORAS)
+    es_peru = func.lower(NoticiaFeed.pais).in_(PAISES_PERU)
     resultado = await db.execute(
         select(NoticiaFeed)
         .where(NoticiaFeed.fecha_captura >= limite)
+        .where(es_peru if peru else or_(NoticiaFeed.pais.is_(None), not_(es_peru)))
         .order_by(NoticiaFeed.fecha_publicacion.desc().nullslast(), NoticiaFeed.id.desc())
         .limit(100)
     )
     return [serializar_feed(noticia) for noticia in resultado.scalars().all()]
 
 
-@router.post("/internacionales/{feed_id}/validar", response_model=EvaluacionResponse)
+@router.get("/internacionales")
+async def obtener_internacionales(db: AsyncSession = Depends(get_db)):
+    return await _feed_del_panel(db, peru=False)
+
+
+@router.get("/peru")
+async def obtener_peru(db: AsyncSession = Depends(get_db)):
+    return await _feed_del_panel(db, peru=True)
+
+
+@router.post("/feed/{feed_id}/validar", response_model=EvaluacionResponse)
+@router.post("/internacionales/{feed_id}/validar", response_model=EvaluacionResponse, include_in_schema=False)
 async def enviar_a_validacion(feed_id: int, db: AsyncSession = Depends(get_db)):
     """
     El periodista elige una noticia del feed: se guarda de forma permanente en
@@ -105,20 +117,23 @@ async def enviar_a_validacion(feed_id: int, db: AsyncSession = Depends(get_db)):
     await db.refresh(noticia)
 
     # Avisa a los demás paneles abiertos que esta tarjeta ya está en validación
-    await internacionales_bus.publish(serializar_feed(noticia))
+    await feed_bus.publish(serializar_feed(noticia))
 
     return construir_respuesta(evaluacion, texto, fuente, evidencias=evidencias)
 
 
-@router.get("/internacionales/stream")
-async def stream_internacionales(request: Request):
+@router.get("/feed/stream")
+@router.get("/internacionales/stream", include_in_schema=False)
+async def stream_feed(request: Request):
     """
     Server-Sent Events: empuja cada noticia nueva del feed apenas se captura,
     y los cambios de estado (p. ej. "en validación") de las ya mostradas.
+    Cada evento trae su "panel" (peru | internacional) para que cada vista
+    se quede con lo suyo.
     """
 
     async def generador():
-        queue = internacionales_bus.subscribe()
+        queue = feed_bus.subscribe()
         try:
             while True:
                 if await request.is_disconnected():
@@ -129,7 +144,7 @@ async def stream_internacionales(request: Request):
                 except asyncio.TimeoutError:
                     yield ": ping\n\n"
         finally:
-            internacionales_bus.unsubscribe(queue)
+            feed_bus.unsubscribe(queue)
 
     return StreamingResponse(
         generador(),

@@ -35,7 +35,7 @@ app.add_middleware(
 
 # Include Routers
 app.include_router(ingesta.router, prefix=f"{settings.API_V1_STR}/ingesta", tags=["Ingesta de Datos"])
-app.include_router(internacionales.router, prefix=f"{settings.API_V1_STR}/noticias", tags=["Noticias Internacionales"])
+app.include_router(internacionales.router, prefix=f"{settings.API_V1_STR}/noticias", tags=["Noticias (paneles Perú e Internacionales)"])
 app.include_router(verificacion.router, prefix=f"{settings.API_V1_STR}/verificacion", tags=["Verificación"])
 
 @app.get("/")

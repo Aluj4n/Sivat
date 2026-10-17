@@ -4,18 +4,32 @@ import json
 import re
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Dict, Optional
+from urllib.parse import urlparse
 
 if TYPE_CHECKING:
     from models.entities import NoticiaFeed
 
 PAISES_PERU = {"peru", "perú", "pe"}
 
+# El feed es uno solo; el país decide en qué panel se muestra cada noticia
+PANEL_PERU = "peru"
+PANEL_INTERNACIONAL = "internacional"
+
+
+def es_pais_peru(pais: Optional[str]) -> bool:
+    return (pais or "").strip().lower() in PAISES_PERU
+
+
+def panel_de(pais: Optional[str]) -> str:
+    return PANEL_PERU if es_pais_peru(pais) else PANEL_INTERNACIONAL
+
 
 def serializar_feed(noticia: "NoticiaFeed") -> Dict[str, Any]:
     """
-    Formato común del endpoint REST del panel Internacionales y del stream SSE,
-    para que el frontend trate igual ambas vías.
+    Formato común de los endpoints REST de los paneles Perú e Internacionales
+    y del stream SSE, para que el frontend trate igual ambas vías.
     """
+    panel = panel_de(noticia.pais)
     return {
         "id": noticia.id,
         "titular": noticia.titular,
@@ -23,15 +37,12 @@ def serializar_feed(noticia: "NoticiaFeed") -> Dict[str, Any]:
         "url_original": noticia.url_original,
         "fuente_origen": noticia.origen,
         "pais": noticia.pais,
-        "categoria": "INTERNACIONAL",
+        "categoria": "PERÚ" if panel == PANEL_PERU else "INTERNACIONAL",
+        "panel": panel,
         "fecha_publicacion": noticia.fecha_publicacion.isoformat() if noticia.fecha_publicacion else None,
         "en_validacion": bool(noticia.en_validacion),
         "afirmacion_id": noticia.afirmacion_id,
     }
-
-
-def es_noticia_peruana(registro: Dict[str, Any]) -> bool:
-    return (registro.get("pais") or "").strip().lower() in PAISES_PERU
 
 
 def _identificador(valor: Optional[str]) -> Optional[str]:
@@ -70,7 +81,7 @@ def normalizar_gdelt(articulo: Dict[str, Any], pais_default: str = "INTL") -> Di
     }
 
 
-# El GKG no trae país de la fuente; se deduce del dominio (.pe → Perú, que se descarta)
+# El GKG no trae país de la fuente; se deduce del dominio
 PAIS_POR_DOMINIO = {
     "pe": "Peru", "mx": "Mexico", "ar": "Argentina", "es": "Spain", "co": "Colombia",
     "cl": "Chile", "ve": "Venezuela", "ec": "Ecuador", "bo": "Bolivia", "uy": "Uruguay",
@@ -95,20 +106,56 @@ def normalizar_gdelt_gkg(articulo: Dict[str, Any], pais_default: str = "INTL") -
         "texto_procesado": titulo,
         "imagen_url": _recortar(articulo.get("imagen"), 1000),
         "url_original": _recortar(articulo.get("url"), 1000),
-        "pais": _pais_por_dominio(articulo.get("dominio"), pais_default),
+        "pais": _pais_gdelt(articulo.get("dominio"), articulo.get("url"), titulo, pais_default),
         "fecha_publicacion": _parse_gdelt_fecha(articulo.get("fecha")),
         "metadatos": json.dumps({"dominio": articulo.get("dominio"), "fuente": "gkg_15min"}, ensure_ascii=False),
     }
 
 
 _RE_PERU = re.compile(r"\bper[uú]\b|\bperuan[oa]s?\b", re.IGNORECASE)
+# "Lima" solo con mayúscula (en minúscula es la fruta o el verbo limar) y no
+# como parte de "Santa Rosa de Lima", nombre de pueblos en otros países
+_RE_LIMA = re.compile(r"(?<!Rosa de )\bLima\b")
 _RE_HTML = re.compile(r"<[^>]+>")
+
+# Secciones de los medios peruanos con noticias de otros países, y las que no
+# son noticia (publicidad, apuestas, contenido SEO para EE. UU. de El Comercio)
+SECCIONES_INTERNACIONALES = {"mundo", "internacional", "internacionales", "world"}
+SECCIONES_DESCARTADAS = {"apuestas-deportivas", "publirreportaje", "publireportaje", "mag"}
+
+
+def menciona_peru(texto: str) -> bool:
+    return bool(_RE_PERU.search(texto or "") or _RE_LIMA.search(texto or ""))
+
+
+def _seccion(url: Optional[str]) -> str:
+    return urlparse(url or "").path.strip("/").split("/")[0].lower()
+
+
+def es_seccion_descartada(url: Optional[str]) -> bool:
+    return _seccion(url) in SECCIONES_DESCARTADAS
 
 
 def _pais_salvo_peru(texto: str, pais: str) -> str:
-    # Redes y RSS no traen país del contenido: si menciona Perú se marca para
-    # que guardar_en_feed lo descarte (eso va al panel Perú, no a Internacionales)
-    return "Peru" if _RE_PERU.search(texto or "") else pais
+    # Redes y medios extranjeros no traen el país del contenido: si menciona
+    # Perú (o Lima) es una noticia sobre Perú y va a ese panel
+    return "Peru" if menciona_peru(texto) else pais
+
+
+def _pais_medio_peruano(url: Optional[str], texto: str) -> str:
+    # Lo de un medio peruano va al panel Perú, salvo su sección internacional
+    # cuando la nota no toca a Perú (RPP sobre Ucrania va a Internacionales)
+    if _seccion(url) in SECCIONES_INTERNACIONALES and not menciona_peru(texto):
+        return "INTL"
+    return "Peru"
+
+
+def _pais_gdelt(dominio: Optional[str], url: Optional[str], titulo: str, pais_default: str) -> str:
+    pais = _pais_por_dominio(dominio, pais_default)
+    if es_pais_peru(pais):
+        return _pais_medio_peruano(url, titulo)
+    # La URL cuenta: Infobae publica lo de Perú bajo infobae.com/peru/...
+    return _pais_salvo_peru(f"{titulo} {url or ''}", pais)
 
 
 def _texto_plano(valor: Optional[str]) -> str:
@@ -187,7 +234,7 @@ def normalizar_bluesky(post: Dict[str, Any]) -> Dict[str, Any]:
 
 
 PAIS_POR_SUBREDDIT = {
-    "argentina": "Argentina", "mexico": "Mexico", "chile": "Chile", "colombia": "Colombia",
+    "peru": "Peru", "argentina": "Argentina", "mexico": "Mexico", "chile": "Chile", "colombia": "Colombia",
     "vzla": "Venezuela", "es": "Spain", "uruguay": "Uruguay", "ecuador": "Ecuador",
 }
 
@@ -237,7 +284,10 @@ def normalizar_rss(entrada: Dict[str, Any], medio: str, pais: str) -> Dict[str, 
         "texto_procesado": f"{titulo}. {resumen}".strip(". ") if resumen else titulo,
         "imagen_url": _recortar(_imagen_feed(entrada), 1000),
         "url_original": _recortar(url, 1000),
-        "pais": _pais_salvo_peru(f"{titulo} {url or ''}", pais),
+        "pais": (
+            _pais_medio_peruano(url, titulo) if es_pais_peru(pais)
+            else _pais_salvo_peru(f"{titulo} {url or ''}", pais)
+        ),
         "fecha_publicacion": _fecha_feed(entrada),
         "metadatos": json.dumps({"medio": medio, "fuente": "rss"}, ensure_ascii=False),
     }
@@ -269,6 +319,7 @@ def normalizar_youtube(item: Dict[str, Any], pais_default: str = "INTL") -> Dict
     video_id = (item.get("id") or {}).get("videoId")
     thumbnails = snippet.get("thumbnails", {})
     imagen = (thumbnails.get("high") or thumbnails.get("medium") or thumbnails.get("default") or {}).get("url")
+    titulo = html.unescape(snippet.get("title") or "")
     fecha = None
     if snippet.get("publishedAt"):
         try:
@@ -279,11 +330,11 @@ def normalizar_youtube(item: Dict[str, Any], pais_default: str = "INTL") -> Dict
         "origen": "YouTube",
         "identificador_externo": video_id,
         # La API de YouTube devuelve entidades HTML (p. ej. &#39;) en título y descripción
-        "titular": _recortar(html.unescape(snippet.get("title") or ""), 500),
+        "titular": _recortar(titulo, 500),
         "texto_procesado": html.unescape(snippet.get("description") or ""),
         "imagen_url": imagen,
         "url_original": f"https://www.youtube.com/watch?v={video_id}" if video_id else None,
-        "pais": pais_default,
+        "pais": _pais_salvo_peru(f"{titulo} {snippet.get('channelTitle') or ''}", pais_default),
         "fecha_publicacion": fecha,
         "metadatos": json.dumps(item, ensure_ascii=False),
     }

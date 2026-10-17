@@ -25,5 +25,6 @@ class EventBroadcaster:
             await queue.put(evento)
 
 
-# Bus dedicado a las noticias/rumores internacionales (GDELT, X, YouTube)
-internacionales_bus = EventBroadcaster()
+# Bus del feed temporal (paneles Perú e Internacionales): cada evento lleva su
+# "panel" y cada vista muestra solo los suyos
+feed_bus = EventBroadcaster()

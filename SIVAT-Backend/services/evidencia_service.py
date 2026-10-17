@@ -23,7 +23,7 @@ from ml.limpieza_texto import STOPWORDS_ES, _quitar_tildes, limpiar_texto
 from models.entities import EvaluacionIA, EvidenciaAfirmacion, EvidenciaVerificacion, NoticiaFeed
 from services.factcheck_service import GoogleFactCheckService
 from services.normalizacion import _fecha_feed, _fecha_iso, _identificador, _recortar, _texto_plano
-from services.rss_service import MEDIOS_RSS, RSSService
+from services.rss_service import MEDIOS_RSS, MEDIOS_RSS_PERU, RSSService
 
 logger = logging.getLogger(__name__)
 
@@ -38,13 +38,15 @@ MAX_POR_TIPO = 5
 MAX_VERIFICACIONES_CORPUS = 5000
 
 ORIGENES_SOCIALES = {"Bluesky", "Reddit", "YouTube", "X"}
-MEDIOS_RECONOCIDOS = {medio for medio, _, _ in MEDIOS_RSS}
+MEDIOS_RECONOCIDOS = {medio for medio, _, _ in MEDIOS_RSS + MEDIOS_RSS_PERU}
 # Los mismos medios (y otros de referencia) cuando llegan vía GDELT con su dominio
 DOMINIOS_RECONOCIDOS = {
     "bbc.com", "bbc.co.uk", "dw.com", "france24.com", "elpais.com", "infobae.com", "europapress.es",
     "euronews.com", "efe.com", "cnn.com", "apnews.com", "reuters.com", "rtve.es", "elmundo.es",
     "abc.es", "lavanguardia.com", "clarin.com", "lanacion.com.ar", "eltiempo.com", "elespectador.com",
     "emol.com", "latercera.com", "eluniversal.com.mx", "milenio.com", "elcomercio.com", "nytimes.com",
+    "canaln.pe", "rpp.pe", "andina.pe", "andina.gob.pe", "elcomercio.pe", "larepublica.pe", "gestion.pe",
+    "diariocorreo.pe", "peru21.pe",
 }
 
 

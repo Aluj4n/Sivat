@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Header from './components/Header/Header';
 import Dashboard from './views/Dashboard';
 import Internacionales from './views/Internacionales';
+import Peru from './views/Peru';
 import Validacion from './views/Validacion';
 import './App.css';
 
@@ -19,11 +20,7 @@ function App() {
           <Internacionales onIrAValidacion={() => setVistaActiva('validacion')} />
         )}
         {vistaActiva === 'validacion' && <Validacion />}
-        {vistaActiva === 'peru' && (
-          <div className="vista-pendiente">
-            <p>Esta sección aún está en construcción.</p>
-          </div>
-        )}
+        {vistaActiva === 'peru' && <Peru onIrAValidacion={() => setVistaActiva('validacion')} />}
       </main>
     </div>
   );

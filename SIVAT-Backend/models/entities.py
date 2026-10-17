@@ -23,7 +23,8 @@ class FuenteExterna(Base):
 
 class NoticiaFeed(Base):
     """
-    Feed temporal del panel Internacionales. Todo lo que se jala de GDELT y
+    Feed temporal de los paneles Perú e Internacionales (el país decide el
+    panel). Todo lo que se jala de GDELT, medios RSS, Bluesky, Reddit y
     YouTube cae aquí y se borra a las 24 h (minimización de datos, Ley 29733).
     Solo cuando un periodista pulsa "Validar" la noticia se copia a
     FuenteExterna (permanente) y entra al flujo de verificación.

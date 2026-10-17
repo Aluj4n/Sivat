@@ -1,11 +1,11 @@
-.internacionales-view {
+.panel-feed {
   padding: 32px 40px;
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
 }
 
-.internacionales-header {
+.panel-feed-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
@@ -14,7 +14,7 @@
   flex-wrap: wrap;
 }
 
-.internacionales-header h1 {
+.panel-feed-header h1 {
   font-size: 26px;
   font-weight: 800;
   color: #1c2b3a;
@@ -24,7 +24,7 @@
   gap: 12px;
 }
 
-.internacionales-live {
+.panel-feed-live {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -37,19 +37,19 @@
   border-radius: 999px;
 }
 
-.internacionales-live.is-on {
+.panel-feed-live.is-on {
   color: #15803d;
   background-color: #dcfce7;
 }
 
-.internacionales-live-dot {
+.panel-feed-live-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
   background-color: #9aa5b1;
 }
 
-.internacionales-live.is-on .internacionales-live-dot {
+.panel-feed-live.is-on .panel-feed-live-dot {
   background-color: #22c55e;
   animation: internacionales-pulse 1.6s ease-in-out infinite;
 }
@@ -59,14 +59,14 @@
   50% { opacity: 0.35; }
 }
 
-.internacionales-header p {
+.panel-feed-header p {
   color: #5a6b7b;
   font-size: 14px;
   margin: 0;
   max-width: 720px;
 }
 
-.internacionales-aviso {
+.panel-feed-aviso {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -77,17 +77,17 @@
   margin-bottom: 20px;
 }
 
-.internacionales-aviso.is-ok {
+.panel-feed-aviso.is-ok {
   background-color: #eef4fa;
   color: #1c527e;
 }
 
-.internacionales-aviso.is-error {
+.panel-feed-aviso.is-error {
   background-color: #fbe6e6;
   color: #a12121;
 }
 
-.internacionales-aviso button {
+.panel-feed-aviso button {
   background: none;
   border: none;
   color: inherit;
@@ -97,17 +97,17 @@
   white-space: nowrap;
 }
 
-.internacionales-estado {
+.panel-feed-estado {
   color: #5a6b7b;
   font-size: 14px;
   margin-bottom: 20px;
 }
 
-.internacionales-error {
+.panel-feed-error {
   color: #b91c1c;
 }
 
-.internacionales-grid {
+.panel-feed-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 24px;
