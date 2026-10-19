@@ -1,0 +1,25 @@
+fastapi==0.103.2
+uvicorn[standard]==0.23.2
+sqlalchemy==2.0.21
+asyncpg==0.28.0
+httpx==0.25.0
+pydantic==2.4.2
+pydantic-settings==2.0.3
+alembic==1.12.0
+python-dotenv==1.0.0
+feedparser==6.0.11
+trafilatura==2.3.1
+
+# Motor de IA/ML (Informe IA/ML: TF-IDF + clasificadores + RAG por similitud coseno)
+pandas==2.1.1
+numpy==1.26.0
+scikit-learn==1.3.1
+nltk==3.8.1
+joblib==1.3.2
+openpyxl==3.1.5
+matplotlib==3.8.4
+
+# Módulo de Tendencias: embeddings multilingües (ml/agrupamiento.py). PyTorch CPU:
+#   pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cpu
+torch==2.14.1
+sentence-transformers==6.1.0

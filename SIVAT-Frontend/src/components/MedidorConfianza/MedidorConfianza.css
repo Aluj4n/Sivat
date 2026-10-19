@@ -1,0 +1,88 @@
+.medidor {
+  /* Rampa secuencial azul validada (dataviz skill): relleno paso 450, pista
+     paso 100 del mismo tono. Sin verde/rojo, para no sugerir un veredicto. */
+  --medidor-relleno: #2a78d6;
+  --medidor-pista: #cde2fb;
+  --medidor-texto: #0b0b0b;
+  --medidor-texto-2: #52514e;
+  --medidor-muted: #898781;
+
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.medidor-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.medidor-titulo {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--medidor-texto-2);
+}
+
+.medidor-valor {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--medidor-texto);
+  line-height: 1;
+}
+
+.medidor-pista {
+  height: 8px;
+  border-radius: 4px;
+  background-color: var(--medidor-pista);
+  overflow: hidden;
+}
+
+.medidor-relleno {
+  height: 100%;
+  border-radius: 4px;
+  background-color: var(--medidor-relleno);
+  transition: width 0.4s ease;
+}
+
+.medidor-escala {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--medidor-muted);
+}
+
+.medidor-nota {
+  font-size: 10px;
+  color: var(--medidor-muted);
+  font-style: italic;
+}
+
+.medidor.is-compacto {
+  max-width: 240px;
+}
+
+.medidor.is-compacto .medidor-valor {
+  font-size: 14px;
+}
+
+.medidor.is-compacto .medidor-pista {
+  height: 6px;
+}
+
+.medidor-aviso {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--medidor-texto-2);
+  background-color: var(--medidor-pista);
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+
+.medidor.is-insuficiente .medidor-valor {
+  color: var(--medidor-muted);
+}
