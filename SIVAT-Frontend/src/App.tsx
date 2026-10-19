@@ -16,7 +16,7 @@ function App() {
     <div className="app-container">
       <Header vistaActiva={vistaActiva} onNavigate={setVistaActiva} />
       <main className="main-content">
-        {vistaActiva === 'dashboard' && <Dashboard />}
+        {vistaActiva === 'dashboard' && <Dashboard onNavegar={setVistaActiva} />}
         {vistaActiva === 'internacionales' && (
           <Internacionales onIrAValidacion={() => setVistaActiva('validacion')} />
         )}

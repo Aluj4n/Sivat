@@ -7,7 +7,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
-from api import ingesta, internacionales, tendencias, verificacion
+from api import dashboard, ingesta, internacionales, tendencias, verificacion
 from db.session import async_session
 from services.evidencia_service import ingerir_verificadores
 from services.ingesta_service import (
@@ -40,6 +40,7 @@ app.add_middleware(
 # Include Routers
 app.include_router(ingesta.router, prefix=f"{settings.API_V1_STR}/ingesta", tags=["Ingesta de Datos"])
 app.include_router(internacionales.router, prefix=f"{settings.API_V1_STR}/noticias", tags=["Noticias (paneles Perú e Internacionales)"])
+app.include_router(dashboard.router, prefix=f"{settings.API_V1_STR}/dashboard", tags=["Dashboard"])
 app.include_router(tendencias.router, prefix=f"{settings.API_V1_STR}/tendencias", tags=["Tendencias"])
 app.include_router(verificacion.router, prefix=f"{settings.API_V1_STR}/verificacion", tags=["Verificación"])
 

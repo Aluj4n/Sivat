@@ -58,18 +58,10 @@
   line-height: 1.4;
 }
 
-.panel-muestra {
-  display: inline-block;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  background-color: #f2f1ec;
-  border-radius: 4px;
-  padding: 2px 6px;
-  margin-left: 8px;
-  vertical-align: middle;
+.dashboard-error {
+  color: #b91c1c;
+  font-size: 13px;
+  margin-top: 12px;
 }
 
 /* KPI row */
@@ -148,16 +140,10 @@
   margin-bottom: 14px;
 }
 
-.line-chart,
 .bar-chart {
   width: 100%;
   height: auto;
   display: block;
-}
-
-.chart-gridline {
-  stroke: var(--gridline);
-  stroke-width: 1;
 }
 
 .chart-axis-label {
@@ -171,46 +157,79 @@
   font-weight: 600;
 }
 
-.chart-area {
-  fill: var(--series-1);
-  opacity: 0.1;
-}
-
-.chart-line {
-  fill: none;
-  stroke: var(--series-1);
-  stroke-width: 2;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-}
-
-.chart-end-dot {
-  fill: var(--series-1);
-  stroke: var(--surface-1);
-  stroke-width: 2;
-}
-
-.chart-end-label {
-  fill: var(--text-primary);
-  font-size: 12px;
-  font-weight: 700;
-}
-
 .bar-track {
-  fill: var(--gridline);
+  fill: #f2f1ec;
+}
+
+/* Series de los gráficos: Perú/Internacional son identidad (categóricos, orden
+   fijo); las decisiones son magnitud de una sola serie (azul), y lo pendiente
+   va en gris para no parecer una decisión. Nunca verde/rojo. */
+.serie-peru { fill: var(--series-1); background-color: var(--series-1); }
+.serie-internacional { fill: var(--series-2); background-color: var(--series-2); }
+.serie-decision { fill: var(--seq-500); }
+.serie-pendiente { fill: var(--baseline); }
+
+.chart-leyenda {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.chart-leyenda span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chart-leyenda i {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
 }
 
 /* Tendencias emergentes */
-.tendencias-lista {
+.panel-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dashboard-selector {
+  display: inline-flex;
+  border: 1px solid var(--gridline);
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #fff;
+}
+
+.dashboard-selector button {
+  border: none;
+  background: none;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.dashboard-selector button.is-activo {
+  background-color: #1c527e;
+  color: #fff;
+}
+
+.dashboard-tendencias {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
 }
 
-.tendencia-item {
+.dashboard-tendencias li {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -219,32 +238,54 @@
   border-bottom: 1px solid var(--gridline);
 }
 
-.tendencia-item:last-child {
+.dashboard-tendencias li:last-child {
   border-bottom: none;
 }
 
-.tendencia-info {
+.dashboard-tendencia-info {
   display: flex;
   flex-direction: column;
   gap: 4px;
   min-width: 0;
 }
 
-.tendencia-tema {
+.dashboard-tendencia-titular {
   font-size: 13px;
   font-weight: 700;
-  color: var(--text-primary);
+  line-height: 1.35;
 }
 
-.tendencia-meta {
+.dashboard-tendencia-meta {
   font-size: 11px;
   color: var(--text-muted);
 }
 
-.tendencia-velocidad {
-  font-size: 13px;
+.dashboard-tendencia-lado {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Prioridad de verificación: misma rampa azul que la pestaña Tendencias */
+.dashboard-prioridad {
+  font-size: 10px;
   font-weight: 700;
-  color: var(--series-2);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.dashboard-prioridad.prioridad-alta { background-color: #104281; color: #fff; }
+.dashboard-prioridad.prioridad-media { background-color: #cde2fb; color: #104281; }
+.dashboard-prioridad.prioridad-baja { background-color: #eef1f4; color: var(--text-secondary); }
+
+.dashboard-tendencia-recientes {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
@@ -295,22 +336,6 @@
   gap: 10px;
 }
 
-.nivel-confianza {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-secondary);
-}
-
-.nivel-confianza-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
 .validacion-botones {
   display: flex;
   gap: 6px;
@@ -334,31 +359,6 @@
 .validacion-botones button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.decision-badge {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background-color: #eef1f4;
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-.decision-aceptado {
-  background-color: #e3f3e3;
-  color: #1a6b1a;
-}
-
-.decision-rechazado {
-  background-color: #fbe6e6;
-  color: #a12121;
-}
-
-.decision-observado {
-  background-color: #fef3da;
-  color: #8a5a00;
 }
 
 .dashboard-ver-mas {
