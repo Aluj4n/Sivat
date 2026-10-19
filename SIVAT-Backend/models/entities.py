@@ -86,11 +86,34 @@ class EvidenciaAfirmacion(Base):
 
 
 class Tendencia(Base):
+    """
+    Un tema del feed en un ciclo del Módulo de Tendencias (agrupamiento no
+    supervisado, ver services/tendencias_service.py). Cada ciclo guarda una
+    foto; `grupo_id` sigue al mismo tema entre ciclos para medir su evolución.
+    Solo agregados del tema (nada de autores, Ley 29733); se conserva 7 días.
+
+    RESTRICCIÓN ÉTICA (RNF-08): `prioridad` es prioridad de VERIFICACIÓN
+    (qué conviene revisar primero), nunca un juicio de veracidad del tema.
+    """
     __tablename__ = "tendencia"
     id = Column(Integer, primary_key=True, index=True)
-    tema = Column(String(255), index=True)
+    panel = Column(String(20), index=True, nullable=False)  # 'peru' | 'internacional'
+    grupo_id = Column(String(36), index=True, nullable=False)
+    ejecucion = Column(DateTime(timezone=True), index=True, nullable=False)
+    primera_vez = Column(DateTime(timezone=True), nullable=False)
+    tema = Column(String(255), index=True)  # términos clave (c-TF-IDF)
+    titular_representativo = Column(String(500))
     volumen_menciones = Column(Integer, default=0)
-    velocidad_crecimiento = Column(Float, default=0.0)
+    fuentes_distintas = Column(Integer, default=0)
+    menciones_redes = Column(Integer, default=0)
+    menciones_medios_reconocidos = Column(Integer, default=0)
+    recientes = Column(Integer, default=0)  # publicaciones en las últimas horas
+    velocidad_crecimiento = Column(Float, default=0.0)  # ritmo reciente / ritmo previo
+    prioridad = Column(String(10), nullable=False)  # Alta | Media | Baja
+    motivos = Column(Text)  # JSON: por qué esa prioridad (explicable)
+    verificacion = Column(Text, nullable=True)  # JSON: verificación relacionada, si existe
+    noticia_ids = Column(Text)  # JSON: ids de noticia_feed del tema
+    centroide = Column(Text)  # JSON: vector medio, para reconocer el tema en el próximo ciclo
     fecha_registro = Column(DateTime(timezone=True), server_default=func.now())
 
 class Afirmacion(Base):

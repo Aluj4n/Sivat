@@ -1,10 +1,13 @@
+# Primero: carga PyTorch antes que scikit-learn (en Windows falla al revés, ver ml/__init__.py)
+import ml  # noqa: F401, I001
+
 import asyncio
 import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
-from api import ingesta, internacionales, verificacion
+from api import ingesta, internacionales, tendencias, verificacion
 from db.session import async_session
 from services.evidencia_service import ingerir_verificadores
 from services.ingesta_service import (
@@ -15,6 +18,7 @@ from services.ingesta_service import (
     ingerir_youtube_internacional,
     limpiar_feed_vencido,
 )
+from services.tendencias_service import calcular_tendencias
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +40,7 @@ app.add_middleware(
 # Include Routers
 app.include_router(ingesta.router, prefix=f"{settings.API_V1_STR}/ingesta", tags=["Ingesta de Datos"])
 app.include_router(internacionales.router, prefix=f"{settings.API_V1_STR}/noticias", tags=["Noticias (paneles Perú e Internacionales)"])
+app.include_router(tendencias.router, prefix=f"{settings.API_V1_STR}/tendencias", tags=["Tendencias"])
 app.include_router(verificacion.router, prefix=f"{settings.API_V1_STR}/verificacion", tags=["Verificación"])
 
 @app.get("/")
@@ -74,6 +79,7 @@ CICLOS_SEGUNDO_PLANO = [
      settings.RSS_INGESTA_HABILITADA),
     ("ingesta-verificadores", ingerir_verificadores, settings.INTERVAL_INGESTA_VERIFICADORES_SEGUNDOS,
      settings.VERIFICADORES_INGESTA_HABILITADA),
+    ("tendencias", calcular_tendencias, settings.INTERVAL_TENDENCIAS_SEGUNDOS, settings.TENDENCIAS_HABILITADAS),
     ("limpieza-feed", limpiar_feed_vencido, 3600, True),
 ]
 

@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     # Módulo RAG: verificadores por RSS cada 30 min (publican pocas veces al día)
     INTERVAL_INGESTA_VERIFICADORES_SEGUNDOS: int = 1800
     VERIFICADORES_INGESTA_HABILITADA: bool = True
+    # Módulo de Tendencias: agrupa el feed por tema cada 15 min (el primer
+    # ciclo tarda ~1-2 min en CPU; los siguientes solo procesan lo nuevo)
+    INTERVAL_TENDENCIAS_SEGUNDOS: int = 900
+    TENDENCIAS_HABILITADAS: bool = True
     # Clave propia para Google Fact Check; si no se define se usa la de YouTube
     # (mismo proyecto de Google Cloud con ambas APIs habilitadas)
     GOOGLE_FACTCHECK_API_KEY: Optional[str] = None

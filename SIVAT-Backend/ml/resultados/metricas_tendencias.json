@@ -1,0 +1,893 @@
+{
+  "horas": 24,
+  "paneles": {
+    "peru": {
+      "noticias": 1476,
+      "fuentes_distintas": 52,
+      "resultados": [
+        {
+          "grupos": 64,
+          "ruido": 0.495,
+          "silueta": 0.4269,
+          "davies_bouldin": 1.4203,
+          "grupos_con_3_o_mas_fuentes": 0.797,
+          "representacion": "e5",
+          "algoritmo": "hdbscan",
+          "parametro": "min_cluster_size=5",
+          "segundos": 0.2,
+          "segundos_vectorizar": 19.8
+        },
+        {
+          "grupos": 80,
+          "ruido": 0.0,
+          "silueta": 0.2211,
+          "davies_bouldin": 2.117,
+          "grupos_con_3_o_mas_fuentes": 0.938,
+          "representacion": "e5",
+          "algoritmo": "kmeans",
+          "parametro": "k=80",
+          "segundos": 0.7,
+          "segundos_vectorizar": 19.8
+        },
+        {
+          "grupos": 14,
+          "ruido": 0.904,
+          "silueta": 0.8595,
+          "davies_bouldin": 0.5836,
+          "grupos_con_3_o_mas_fuentes": 0.643,
+          "representacion": "e5",
+          "algoritmo": "dbscan",
+          "parametro": "eps=0.1",
+          "segundos": 0.1,
+          "segundos_vectorizar": 19.8
+        },
+        {
+          "grupos": 82,
+          "ruido": 0.339,
+          "silueta": 0.5337,
+          "davies_bouldin": 1.0974,
+          "grupos_con_3_o_mas_fuentes": 0.793,
+          "representacion": "tfidf",
+          "algoritmo": "hdbscan",
+          "parametro": "min_cluster_size=5",
+          "segundos": 0.1,
+          "segundos_vectorizar": 0.3
+        },
+        {
+          "grupos": 160,
+          "ruido": 0.0,
+          "silueta": 0.3845,
+          "davies_bouldin": 1.3241,
+          "grupos_con_3_o_mas_fuentes": 0.831,
+          "representacion": "tfidf",
+          "algoritmo": "kmeans",
+          "parametro": "k=160",
+          "segundos": 0.5,
+          "segundos_vectorizar": 0.3
+        },
+        {
+          "grupos": 22,
+          "ruido": 0.86,
+          "silueta": 0.867,
+          "davies_bouldin": 0.4811,
+          "grupos_con_3_o_mas_fuentes": 0.591,
+          "representacion": "tfidf",
+          "algoritmo": "dbscan",
+          "parametro": "eps=0.05",
+          "segundos": 0.1,
+          "segundos_vectorizar": 0.3
+        }
+      ],
+      "temas_principales": {
+        "e5_hdbscan": [
+          {
+            "terminos": [
+              "onpe",
+              "elecciones",
+              "regionales",
+              "municipales",
+              "conteo"
+            ],
+            "noticias": 54,
+            "fuentes": 4,
+            "titular_representativo": "Resultados ONPE en región Lima al 99.202 %: aquí el conteo oficial de las Elecciones Regionales y Municipales 2026"
+          },
+          {
+            "terminos": [
+              "grau",
+              "alianza",
+              "atletico",
+              "matute",
+              "lima"
+            ],
+            "noticias": 28,
+            "fuentes": 9,
+            "titular_representativo": "Alianza Lima vs Atlético Grau EN VIVO HOY: minuto a minuto del partido en Matute por Torneo Clausura de Liga 1 2026"
+          },
+          {
+            "terminos": [
+              "millones",
+              "peru",
+              "generar",
+              "nombramiento",
+              "impulso"
+            ],
+            "noticias": 23,
+            "fuentes": 12,
+            "titular_representativo": "Nueve de cada 10 empresas peruanas prevé aumentar inversión en inteligencia artificial"
+          },
+          {
+            "terminos": [
+              "magaly",
+              "medina",
+              "espectaculos",
+              "christian",
+              "araujo"
+            ],
+            "noticias": 23,
+            "fuentes": 6,
+            "titular_representativo": "Magaly Medina queda impactada tras ver imágenes de Deysi Araujo con un cabrito y exige que las quiten de su programa: \"Son chocantes\" | Espectáculos"
+          },
+          {
+            "terminos": [
+              "dios",
+              "integrantes",
+              "madre",
+              "pampa",
+              "guardianes"
+            ],
+            "noticias": 22,
+            "fuentes": 11,
+            "titular_representativo": "Capturan a 13 presuntos integrantes de Los Guardianes de la Pampa e incautan armas en Madre de Dios"
+          },
+          {
+            "terminos": [
+              "milagros",
+              "senor",
+              "procesion",
+              "recorrido",
+              "segundo"
+            ],
+            "noticias": 20,
+            "fuentes": 10,
+            "titular_representativo": "Señor de los Milagros en Lima: conoce la ruta y los horarios de la segunda procesión del domingo 18 de octubre de 2026"
+          },
+          {
+            "terminos": [
+              "facultades",
+              "comision",
+              "constitucion",
+              "senado",
+              "pedido"
+            ],
+            "noticias": 20,
+            "fuentes": 9,
+            "titular_representativo": "Comisión de Constitución del Senado continuará debate de pedido de facultades este lunes 19"
+          },
+          {
+            "terminos": [
+              "nino",
+              "desastres",
+              "cadaveres",
+              "lineamientos",
+              "aprueba"
+            ],
+            "noticias": 20,
+            "fuentes": 11,
+            "titular_representativo": "El Niño: Gobierno aprueba lineamientos para gestión de cadáveres ante desastres"
+          },
+          {
+            "terminos": [
+              "marcos",
+              "san",
+              "admision",
+              "examen",
+              "link"
+            ],
+            "noticias": 19,
+            "fuentes": 9,
+            "titular_representativo": "Resultados San Marcos 2027-I: LINK para conocer los puntajes y revisar si alcanzaste una vacante"
+          },
+          {
+            "terminos": [
+              "viaje",
+              "cirujano",
+              "xiv",
+              "papa",
+              "leon"
+            ],
+            "noticias": 18,
+            "fuentes": 13,
+            "titular_representativo": "Papa León XIV en Perú: su cirujano señala que no hay motivos clínicos que impidan el viaje"
+          },
+          {
+            "terminos": [
+              "real",
+              "sevilla",
+              "laliga",
+              "madrid",
+              "betis"
+            ],
+            "noticias": 18,
+            "fuentes": 4,
+            "titular_representativo": "ESPN en vivo: dónde ver Real Madrid vs. Sevilla online por LaLiga 2026"
+          },
+          {
+            "terminos": [
+              "iron",
+              "maiden",
+              "concierto",
+              "estadio",
+              "nacional"
+            ],
+            "noticias": 17,
+            "fuentes": 5,
+            "titular_representativo": "Iron Maiden en Lima: así lucen los alrededores del Estadio Nacional a horas del esperado concierto"
+          },
+          {
+            "terminos": [
+              "ice",
+              "agentes",
+              "inmigrantes",
+              "indocumentados",
+              "usa"
+            ],
+            "noticias": 16,
+            "fuentes": 4,
+            "titular_representativo": "Alerta máxima, inmigrantes legales e indocumentados en Estados Unidos: agentes del ICE seguirán realizando operativos enmascarados; difunden la insólita razón, usa, ee.uu., lbeu"
+          },
+          {
+            "terminos": [
+              "impulsa",
+              "fortalecer",
+              "minam",
+              "economia",
+              "empresas"
+            ],
+            "noticias": 16,
+            "fuentes": 4,
+            "titular_representativo": "La IA impulsa el comercio mundial: productos tecnológicos explican el 76% del crecimiento"
+          },
+          {
+            "terminos": [
+              "extranjeros",
+              "interviene",
+              "megaoperativo",
+              "operativo",
+              "migraciones"
+            ],
+            "noticias": 16,
+            "fuentes": 11,
+            "titular_representativo": "Perú interviene a 1.800 extranjeros en un megaoperativo migratorio"
+          }
+        ],
+        "tfidf_hdbscan": [
+          {
+            "terminos": [
+              "xiv",
+              "leon",
+              "papa",
+              "visita",
+              "cirujano"
+            ],
+            "noticias": 48,
+            "fuentes": 20,
+            "titular_representativo": "Médico que operó al papa León XIV: Puede..."
+          },
+          {
+            "terminos": [
+              "real",
+              "laliga",
+              "betis",
+              "madrid",
+              "sevilla"
+            ],
+            "noticias": 34,
+            "fuentes": 5,
+            "titular_representativo": "⚽ SKY Sports EN VIVO — Ver Barcelona vs. Real Betis GRATIS por TV online"
+          },
+          {
+            "terminos": [
+              "nino",
+              "fenomeno",
+              "fujimori",
+              "costero",
+              "desastres"
+            ],
+            "noticias": 34,
+            "fuentes": 12,
+            "titular_representativo": "Gremio exportador: pymes agroexportadoras requieren financiamiento flexible ante El Niño"
+          },
+          {
+            "terminos": [
+              "milagros",
+              "senor",
+              "procesion",
+              "recorrido",
+              "segundo"
+            ],
+            "noticias": 30,
+            "fuentes": 11,
+            "titular_representativo": "Señor de los Milagros inicia su segundo..."
+          },
+          {
+            "terminos": [
+              "arequipa",
+              "caminos",
+              "inca",
+              "hospital",
+              "etapa"
+            ],
+            "noticias": 25,
+            "fuentes": 6,
+            "titular_representativo": "Arequipa: Recuperan moto que había sido reportada como hurtada en Paucarpata"
+          },
+          {
+            "terminos": [
+              "domingo",
+              "hoy",
+              "octubre",
+              "precio",
+              "tipo"
+            ],
+            "noticias": 25,
+            "fuentes": 9,
+            "titular_representativo": "Programa Puentes de Fe, hoy domingo 18 de octubre del 2026"
+          },
+          {
+            "terminos": [
+              "anos",
+              "despues",
+              "cada",
+              "muere",
+              "tierra"
+            ],
+            "noticias": 23,
+            "fuentes": 11,
+            "titular_representativo": "Minedu equipa a 19 escuelas con instrumentos musicales por los 15 años de Orquestando"
+          },
+          {
+            "terminos": [
+              "lima",
+              "frente",
+              "menos",
+              "distritos",
+              "rimac"
+            ],
+            "noticias": 23,
+            "fuentes": 12,
+            "titular_representativo": "LIMA METROPOLITANA Y LAS FALENCIAS FRENTE AL DENGUE"
+          },
+          {
+            "terminos": [
+              "temblor",
+              "epicentro",
+              "magnitud",
+              "ultimo",
+              "sismo"
+            ],
+            "noticias": 22,
+            "fuentes": 6,
+            "titular_representativo": "Temblor en Colombia HOY, sábado 17 de octubre: epicentro y magnitud de último sismo según reporte SGC"
+          },
+          {
+            "terminos": [
+              "noticias",
+              "olfatecho",
+              "sabado",
+              "manana",
+              "tarde"
+            ],
+            "noticias": 21,
+            "fuentes": 1,
+            "titular_representativo": "📰 Olfatecho Noticias de la Tarde — sábado 17 de octubre"
+          },
+          {
+            "terminos": [
+              "millones",
+              "bosques",
+              "transfiere",
+              "semana",
+              "inversionistas"
+            ],
+            "noticias": 20,
+            "fuentes": 10,
+            "titular_representativo": "ANIN requiere S/ 8,000 millones para inversiones en 2027, pero su presupuesto es menor"
+          },
+          {
+            "terminos": [
+              "peru",
+              "bolivia",
+              "crece",
+              "fuerzas",
+              "pymes"
+            ],
+            "noticias": 20,
+            "fuentes": 6,
+            "titular_representativo": "Prohiben el pelo largo en Peru .Putos fascistas de mierda!"
+          },
+          {
+            "terminos": [
+              "facultades",
+              "senado",
+              "constitucion",
+              "comision",
+              "pedido"
+            ],
+            "noticias": 20,
+            "fuentes": 9,
+            "titular_representativo": "Comisión de Constitución del Senado reanuda este lunes debate sobre el pedido de facultades legislativas"
+          },
+          {
+            "terminos": [
+              "piura",
+              "registro",
+              "usd",
+              "sullana",
+              "ilicitas"
+            ],
+            "noticias": 18,
+            "fuentes": 5,
+            "titular_representativo": "La simpática Astrid Gavidia fue coronada como “Miss Teen Model Piura 2026″"
+          },
+          {
+            "terminos": [
+              "marcos",
+              "admision",
+              "examen",
+              "san",
+              "link"
+            ],
+            "noticias": 18,
+            "fuentes": 9,
+            "titular_representativo": "Resultados Examen de admisión San Marcos 2027-I: lista de ingresantes correspondiente a las Áreas D y E del 17 de octubre"
+          }
+        ]
+      }
+    },
+    "internacional": {
+      "noticias": 14482,
+      "fuentes_distintas": 653,
+      "resultados": [
+        {
+          "grupos": 376,
+          "ruido": 0.706,
+          "silueta": 0.3916,
+          "davies_bouldin": 1.331,
+          "grupos_con_3_o_mas_fuentes": 0.907,
+          "representacion": "e5",
+          "algoritmo": "hdbscan",
+          "parametro": "min_cluster_size=5",
+          "segundos": 9.4,
+          "segundos_vectorizar": 78.1
+        },
+        {
+          "grupos": 20,
+          "ruido": 0.0,
+          "silueta": 0.1384,
+          "davies_bouldin": 2.7422,
+          "grupos_con_3_o_mas_fuentes": 1.0,
+          "representacion": "e5",
+          "algoritmo": "kmeans",
+          "parametro": "k=20",
+          "segundos": 4.1,
+          "segundos_vectorizar": 78.1
+        },
+        {
+          "grupos": 85,
+          "ruido": 0.95,
+          "silueta": 0.8162,
+          "davies_bouldin": 0.4703,
+          "grupos_con_3_o_mas_fuentes": 0.859,
+          "representacion": "e5",
+          "algoritmo": "dbscan",
+          "parametro": "eps=0.05",
+          "segundos": 0.8,
+          "segundos_vectorizar": 78.1
+        },
+        {
+          "grupos": 503,
+          "ruido": 0.514,
+          "silueta": 0.6076,
+          "davies_bouldin": 0.8792,
+          "grupos_con_3_o_mas_fuentes": 0.895,
+          "representacion": "tfidf",
+          "algoritmo": "hdbscan",
+          "parametro": "min_cluster_size=5",
+          "segundos": 7.9,
+          "segundos_vectorizar": 1.0
+        },
+        {
+          "grupos": 160,
+          "ruido": 0.0,
+          "silueta": 0.3177,
+          "davies_bouldin": 1.8918,
+          "grupos_con_3_o_mas_fuentes": 0.994,
+          "representacion": "tfidf",
+          "algoritmo": "kmeans",
+          "parametro": "k=160",
+          "segundos": 2.3,
+          "segundos_vectorizar": 1.0
+        },
+        {
+          "grupos": 263,
+          "ruido": 0.674,
+          "silueta": 0.7076,
+          "davies_bouldin": 0.5943,
+          "grupos_con_3_o_mas_fuentes": 0.856,
+          "representacion": "tfidf",
+          "algoritmo": "dbscan",
+          "parametro": "eps=0.05",
+          "segundos": 1.4,
+          "segundos_vectorizar": 1.0
+        }
+      ],
+      "temas_principales": {
+        "e5_hdbscan": [
+          {
+            "terminos": [
+              "xiv",
+              "papa",
+              "leon",
+              "pulmon",
+              "vaticano"
+            ],
+            "noticias": 235,
+            "fuentes": 163,
+            "titular_representativo": "Papa León XIV regresa al Vaticano tras ser operado de un cáncer de pulmón"
+          },
+          {
+            "terminos": [
+              "dibu",
+              "martinez",
+              "chelsea",
+              "mandibula",
+              "golpe"
+            ],
+            "noticias": 102,
+            "fuentes": 78,
+            "titular_representativo": "'Dibu' Martínez fue operado con éxito tras fractura de mandíbula con el Chelsea : \"En unas semanas volvemos\""
+          },
+          {
+            "terminos": [
+              "accidente",
+              "camion",
+              "ruta",
+              "choque",
+              "atropellado"
+            ],
+            "noticias": 93,
+            "fuentes": 70,
+            "titular_representativo": "El vuelco de una camioneta dejó dos muertos y dos heridos graves | AgenciaFe"
+          },
+          {
+            "terminos": [
+              "alicante",
+              "almeria",
+              "lluvias",
+              "aviso",
+              "alerta"
+            ],
+            "noticias": 86,
+            "fuentes": 34,
+            "titular_representativo": "🔴 Emergencias sube a nivel rojo la alerta por lluvia en Alicante y Valencia este domingo leer.diariodeleon.es/…"
+          },
+          {
+            "terminos": [
+              "museo",
+              "retiro",
+              "obras",
+              "nacional",
+              "piezas"
+            ],
+            "noticias": 63,
+            "fuentes": 35,
+            "titular_representativo": "Retiro de piezas en Museo Nacional de Colombia genera rechazo de museos y expertos"
+          },
+          {
+            "terminos": [
+              "trudy",
+              "huracan",
+              "categoria",
+              "colima",
+              "costas"
+            ],
+            "noticias": 61,
+            "fuentes": 41,
+            "titular_representativo": "Huracán Trudy alcanza categoría 2 y amenaza con fuertes lluvias a México"
+          },
+          {
+            "terminos": [
+              "resultado",
+              "sabado",
+              "sorteo",
+              "comprobar",
+              "hoy"
+            ],
+            "noticias": 59,
+            "fuentes": 14,
+            "titular_representativo": "Lotería Extra: Resultado del sábado 17 de octubre de 2026"
+          },
+          {
+            "terminos": [
+              "betis",
+              "barcelona",
+              "lamine",
+              "yamal",
+              "laliga"
+            ],
+            "noticias": 49,
+            "fuentes": 42,
+            "titular_representativo": "FC Barcelona golea al Real Betis y mantiene racha invicta en LaLiga"
+          },
+          {
+            "terminos": [
+              "misa",
+              "sacerdote",
+              "caerle",
+              "cruz",
+              "ecuador"
+            ],
+            "noticias": 46,
+            "fuentes": 43,
+            "titular_representativo": "Sacerdote muere al caerle una cruz durante una misa en Ecuador"
+          },
+          {
+            "terminos": [
+              "armado",
+              "dentista",
+              "balazos",
+              "ataque",
+              "gringo"
+            ],
+            "noticias": 45,
+            "fuentes": 32,
+            "titular_representativo": "Muere presunto delincuente en ataque"
+          },
+          {
+            "terminos": [
+              "pavesa",
+              "trapiello",
+              "cabalgar",
+              "boccanegra",
+              "simon"
+            ],
+            "noticias": 39,
+            "fuentes": 20,
+            "titular_representativo": "Andrés Trapiello: Cabalgar una pavesa"
+          },
+          {
+            "terminos": [
+              "base",
+              "canada",
+              "militar",
+              "incendio",
+              "alberta"
+            ],
+            "noticias": 38,
+            "fuentes": 30,
+            "titular_representativo": "Grave incendio en una base militar en Canadá causa muertos y heridos"
+          },
+          {
+            "terminos": [
+              "limoges",
+              "ayuntamiento",
+              "historico",
+              "edificio",
+              "arde"
+            ],
+            "noticias": 35,
+            "fuentes": 31,
+            "titular_representativo": "Incendio destruye histórico Ayuntamiento de Limoges durante protestas en Francia"
+          },
+          {
+            "terminos": [
+              "celebra",
+              "folclore",
+              "magosta",
+              "sabor",
+              "sabores"
+            ],
+            "noticias": 34,
+            "fuentes": 30,
+            "titular_representativo": "Tlaxcallan celebra la riqueza natural y los saberes ancestrales"
+          },
+          {
+            "terminos": [
+              "terrorismo",
+              "irun",
+              "ertzaintza",
+              "investigados",
+              "acusados"
+            ],
+            "noticias": 33,
+            "fuentes": 29,
+            "titular_representativo": "Dos detenidos en Irun (Gipuzkoa) investigados por terrorismo"
+          }
+        ],
+        "tfidf_hdbscan": [
+          {
+            "terminos": [
+              "jauregui",
+              "cesar",
+              "chihuahua",
+              "exfiscal",
+              "detencion"
+            ],
+            "noticias": 116,
+            "fuentes": 47,
+            "titular_representativo": "Fiscalía de Chihuahua investiga omisiones en operativo que derivó en captura de César Jáuregui"
+          },
+          {
+            "terminos": [
+              "tras",
+              "mina",
+              "ormuz",
+              "terremoto",
+              "chocar"
+            ],
+            "noticias": 95,
+            "fuentes": 75,
+            "titular_representativo": "Usar ketamina tras una cesárea alivia la depresión posparto"
+          },
+          {
+            "terminos": [
+              "millones",
+              "dolares",
+              "bts",
+              "bienes",
+              "jep"
+            ],
+            "noticias": 88,
+            "fuentes": 70,
+            "titular_representativo": "Multas de 187 millones por el empleo irregular de extranjeros"
+          },
+          {
+            "terminos": [
+              "nueva",
+              "york",
+              "edicion",
+              "salvia",
+              "messii"
+            ],
+            "noticias": 80,
+            "fuentes": 67,
+            "titular_representativo": "Nueva función de El laberinto del fauno en el FICM"
+          },
+          {
+            "terminos": [
+              "noticias",
+              "chisme",
+              "cruzeiro",
+              "shorts",
+              "buenas"
+            ],
+            "noticias": 73,
+            "fuentes": 5,
+            "titular_representativo": "🦊NOTÍCIAS DO CRUZEIRO | GERSON DE SAÍDA DO CRUZEIRO ?#noticias #cruzeiro"
+          },
+          {
+            "terminos": [
+              "personas",
+              "evacuar",
+              "atrapadas",
+              "protestan",
+              "urda"
+            ],
+            "noticias": 67,
+            "fuentes": 54,
+            "titular_representativo": "Tim Spector, experto en microbiota: «El 90 % de las personas no tiene deficiencia de proteínas. Sin embargo, los fabricantes lo añaden porque vende productos»"
+          },
+          {
+            "terminos": [
+              "casa",
+              "embarazada",
+              "ocultar",
+              "doce",
+              "blanca"
+            ],
+            "noticias": 67,
+            "fuentes": 54,
+            "titular_representativo": "No tires las cucharitas de plástico usadas: 4 ideas para reciclarlas y decorar tu casa sin gastar de más"
+          },
+          {
+            "terminos": [
+              "tres",
+              "pulseras",
+              "lugansk",
+              "falsas",
+              "ucranianos"
+            ],
+            "noticias": 66,
+            "fuentes": 53,
+            "titular_representativo": "BBVA – Tres herramientas de IA para tres tareas de tu pyme"
+          },
+          {
+            "terminos": [
+              "anos",
+              "actor",
+              "rudi",
+              "cumplen",
+              "celebra"
+            ],
+            "noticias": 61,
+            "fuentes": 48,
+            "titular_representativo": "Los noventa, los años audaces"
+          },
+          {
+            "terminos": [
+              "primera",
+              "vez",
+              "cada",
+              "equipos",
+              "etapa"
+            ],
+            "noticias": 59,
+            "fuentes": 50,
+            "titular_representativo": "Gaby Rivero se convierte en abuela por primera vez"
+          },
+          {
+            "terminos": [
+              "asi",
+              "solis",
+              "cesfam",
+              "flota",
+              "collar"
+            ],
+            "noticias": 57,
+            "fuentes": 45,
+            "titular_representativo": "Whalefall: así construyeron el estómago de la ballena"
+          },
+          {
+            "terminos": [
+              "nuevo",
+              "citroen",
+              "reglamento",
+              "unam",
+              "lali"
+            ],
+            "noticias": 54,
+            "fuentes": 50,
+            "titular_representativo": "Inaugurarán el nuevo polideportivo de Icaño con la presencia del gobernador"
+          },
+          {
+            "terminos": [
+              "salud",
+              "mental",
+              "sheinbaum",
+              "sistema",
+              "mirtha"
+            ],
+            "noticias": 54,
+            "fuentes": 47,
+            "titular_representativo": "La grasa corporal: ¿enemiga de la salud o aliada del organismo?"
+          },
+          {
+            "terminos": [
+              "vida",
+              "costo",
+              "localizan",
+              "toda",
+              "sindicatos"
+            ],
+            "noticias": 52,
+            "fuentes": 46,
+            "titular_representativo": "La vida de Brian"
+          },
+          {
+            "terminos": [
+              "argentina",
+              "caputo",
+              "excedente",
+              "copa",
+              "jugara"
+            ],
+            "noticias": 51,
+            "fuentes": 34,
+            "titular_representativo": "Milagros Giménez asumió como directora ejecutiva de la Fundación Enseñá por Argentina"
+          }
+        ]
+      }
+    }
+  }
+}

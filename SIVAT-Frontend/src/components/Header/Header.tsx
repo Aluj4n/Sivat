@@ -13,6 +13,7 @@ const OPCIONES_NAV: { id: Vista; label: string }[] = [
   { id: 'dashboard', label: 'DASHBOARD' },
   { id: 'peru', label: 'PERÚ' },
   { id: 'internacionales', label: 'INTERNACIONALES' },
+  { id: 'tendencias', label: 'TENDENCIAS' },
   { id: 'validacion', label: 'VALIDACIÓN' },
 ];
 
