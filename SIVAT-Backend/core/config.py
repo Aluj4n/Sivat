@@ -1,6 +1,4 @@
-import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import AnyHttpUrl, validator
 from typing import Optional
 
 class Settings(BaseSettings):
@@ -13,9 +11,6 @@ class Settings(BaseSettings):
     # API Keys
     X_API_BEARER_TOKEN: str
     YOUTUBE_API_KEY: str
-    
-    # Security
-    SECRET_KEY: str
 
     # Ingesta automática del panel Internacionales (feed temporal, ver NoticiaFeed)
     # GDELT: se revisa cada 3 min si salió el archivo GKG de 15 min (estático, sin 429).
@@ -55,7 +50,9 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
-        case_sensitive=True
+        case_sensitive=True,
+        # Un .env con variables que ya no se usan (p. ej. SECRET_KEY) sigue funcionando
+        extra="ignore",
     )
 
 settings = Settings()

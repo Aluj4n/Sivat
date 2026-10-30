@@ -69,7 +69,7 @@ function tablaEvidencia(evaluacion: Evaluacion, tipo: 'verificacion' | 'medio'):
     <tbody>${filas}</tbody></table>`;
 }
 
-export function construirInforme(evaluacion: Evaluacion): string {
+function construirInforme(evaluacion: Evaluacion): string {
   const decision = evaluacion.decision;
   const titular = titularDe(evaluacion.texto);
   const cuerpo = evaluacion.texto.slice(evaluacion.texto.indexOf(titular) + titular.length).trim();

@@ -23,14 +23,17 @@ function tiempoRelativo(iso: string | null): string {
 const NewsCard: React.FC<Props> = ({ noticia, validando, onValidar }) => {
   return (
     <article className={`news-card ${noticia.en_validacion ? 'is-en-validacion' : ''}`}>
-      <img
-        src={noticia.imagen_url || '/placeholder.jpg'}
-        alt=""
-        className="news-card-img"
-        onError={(e) => {
-          (e.currentTarget as HTMLImageElement).src = '/placeholder.jpg';
-        }}
-      />
+      {/* Sin imagen (o si falla al cargar) queda el fondo gris de la tarjeta */}
+      {noticia.imagen_url && (
+        <img
+          src={noticia.imagen_url}
+          alt=""
+          className="news-card-img"
+          onError={(e) => {
+            e.currentTarget.style.display = 'none';
+          }}
+        />
+      )}
       <div className="news-card-overlay" />
 
       <div className="news-card-body">

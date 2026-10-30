@@ -105,7 +105,6 @@ El archivo `.env` va en `SIVAT-Backend/` y **no se sube al repositorio**, porque
 | `DATABASE_URL` | `postgresql+asyncpg://postgres:password@localhost:5433/sivat_db` (coincide con `docker-compose.yml`) |
 | `YOUTUBE_API_KEY` | Clave de Google Cloud. Se usa para YouTube y para Google Fact Check. Sin una clave válida, esas dos fuentes fallan y el resto sigue funcionando. |
 | `X_API_BEARER_TOKEN` | Obligatoria, pero X no se usa por ahora: puede ser cualquier texto. |
-| `SECRET_KEY` | Cualquier texto largo. |
 
 Variables opcionales:
 - `GOOGLE_FACTCHECK_API_KEY`: clave propia para Fact Check; si falta, se usa la de YouTube.
