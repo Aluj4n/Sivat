@@ -7,7 +7,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
-from api import dashboard, ingesta, internacionales, tendencias, verificacion
+from api import busqueda, dashboard, ingesta, internacionales, tendencias, verificacion
 from db.session import async_session
 from services.evidencia_service import ingerir_verificadores
 from services.ingesta_service import (
@@ -43,7 +43,7 @@ app.include_router(internacionales.router, prefix=f"{settings.API_V1_STR}/notici
 app.include_router(dashboard.router, prefix=f"{settings.API_V1_STR}/dashboard", tags=["Dashboard"])
 app.include_router(tendencias.router, prefix=f"{settings.API_V1_STR}/tendencias", tags=["Tendencias"])
 app.include_router(verificacion.router, prefix=f"{settings.API_V1_STR}/verificacion", tags=["Verificación"])
-
+app.include_router(busqueda.router, prefix=f"{settings.API_V1_STR}/busqueda", tags=["Búsqueda"])
 @app.get("/")
 def read_root():
     return {"message": "Bienvenido a la API de SIVAT"}

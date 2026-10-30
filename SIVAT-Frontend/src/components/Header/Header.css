@@ -118,6 +118,11 @@
   opacity: 0.8;
 }
 
+.search-button.active {
+  color: #ffd166;
+  opacity: 1;
+}
+
 /* Responsive adjustments */
 @media (max-width: 900px) {
   .canal-n-header {

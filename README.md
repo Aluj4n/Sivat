@@ -21,6 +21,7 @@ Proyecto académico del curso *Sistemas Inteligentes y Machine Learning* (UPN).
 | **Internacionales** | Feed en vivo de noticias y rumores internacionales (GDELT, medios RSS, Bluesky, Reddit, YouTube). |
 | **Tendencias** | Agrupa el feed por tema con IA y ordena los temas por **prioridad de verificación** (qué conviene revisar primero). |
 | **Validación** | Analiza una noticia o enlace: modelo de clasificación, evidencia de verificadores y medios (RAG) y decisión del periodista. |
+| **Búsqueda** (lupa) | Busca por palabras clave, sin importar tildes, en el feed de 24 h y en el historial de afirmaciones evaluadas. |
 
 ### Componentes de inteligencia artificial
 
@@ -42,8 +43,8 @@ Las métricas y figuras de los experimentos están en [`SIVAT-Backend/ml/resulta
 ```
 SIVAT/
 ├── SIVAT-Backend/
-│   ├── api/              # Endpoints REST (noticias, verificación, tendencias, dashboard)
-│   ├── services/         # Ingesta de fuentes, RAG, clasificador, tendencias
+│   ├── api/              # Endpoints REST (noticias, verificación, tendencias, dashboard, búsqueda)
+│   ├── services/         # Ingesta de fuentes, RAG, clasificador, tendencias, búsqueda
 │   ├── ml/               # Descarga de datos, entrenamiento, experimentos y resultados
 │   ├── models/           # Tablas de la base de datos
 │   ├── models_ml/        # Modelo entrenado (modelo_articulos.joblib)
