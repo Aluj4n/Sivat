@@ -33,16 +33,6 @@
   background-color: transparent;
 }
 
-/* Simulate the N logo */
-.logo-text {
-  font-size: 32px;
-  font-weight: 800;
-  letter-spacing: -1px;
-  color: #ffffff;
-  /* Making it look a bit closer to the stylized N */
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-}
-
 .main-nav ul {
   display: flex;
   list-style: none;
@@ -76,32 +66,6 @@
   gap: 25px;
 }
 
-.alerta-noticias {
-  font-size: 13px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-
-.alerta-noticias .hashtag {
-  margin-right: 2px;
-}
-
-.whatsapp-contact {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.whatsapp-icon {
-  width: 18px;
-  height: 18px;
-}
-
 .search-button {
   background: transparent;
   border: none;
@@ -118,6 +82,11 @@
   opacity: 0.8;
 }
 
+.search-button.active {
+  color: #ffd166;
+  opacity: 1;
+}
+
 /* Responsive adjustments */
 @media (max-width: 900px) {
   .canal-n-header {
@@ -126,9 +95,5 @@
   
   .main-nav {
     display: none; /* Hide nav on mobile for simplicity, could add a hamburger menu */
-  }
-  
-  .alerta-noticias {
-    display: none;
   }
 }

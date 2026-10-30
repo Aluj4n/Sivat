@@ -336,31 +336,6 @@
   gap: 10px;
 }
 
-.validacion-botones {
-  display: flex;
-  gap: 6px;
-}
-
-.validacion-botones button {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 5px 10px;
-  border-radius: 6px;
-  border: 1px solid var(--gridline);
-  background-color: #fff;
-  color: #1c527e;
-  cursor: pointer;
-}
-
-.validacion-botones button:hover:not(:disabled) {
-  background-color: #eef4fa;
-}
-
-.validacion-botones button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .dashboard-ver-mas {
   display: block;
   text-align: center;

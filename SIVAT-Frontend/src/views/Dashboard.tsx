@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
+import ControlesDecision from '../components/ControlesDecision/ControlesDecision';
 import MedidorConfianza from '../components/MedidorConfianza/MedidorConfianza';
 import type { PanelNoticias } from '../components/PanelFeed/PanelFeed';
+import type { Decision, DecisionInfo } from '../tipos/verificacion';
 import { titularDe } from '../utils/texto';
 import './Dashboard.css';
 
@@ -13,14 +15,6 @@ const API = '/api/v1';
 const REFRESCO_MS = 60_000;
 const TENDENCIAS_A_MOSTRAR = 5;
 const COLA_A_MOSTRAR = 5;
-
-type Decision = 'Aceptado' | 'Rechazado' | 'Observado';
-
-interface DecisionInfo {
-  decision_periodista: Decision;
-  comentarios: string | null;
-  fecha_decision: string;
-}
 
 interface Evaluacion {
   afirmacion_id: number;
@@ -116,14 +110,13 @@ function ChartIngesta({ datos }: { datos: Resumen['feed']['por_tipo'] }) {
 function ChartDecisiones({ afirmaciones }: { afirmaciones: Resumen['afirmaciones'] }) {
   const filas = [
     { estado: 'Pendientes', valor: afirmaciones.pendientes, pendiente: true },
-    { estado: 'Aceptadas', valor: afirmaciones.decisiones.Aceptado, pendiente: false },
-    { estado: 'Observadas', valor: afirmaciones.decisiones.Observado, pendiente: false },
-    { estado: 'Rechazadas', valor: afirmaciones.decisiones.Rechazado, pendiente: false },
+    { estado: 'En observación', valor: afirmaciones.decisiones.Observado, pendiente: false },
+    { estado: 'Validadas', valor: afirmaciones.decisiones.Validado, pendiente: false },
   ];
   const w = 520;
   const barH = 22;
   const gap = 18;
-  const padLeft = 96;
+  const padLeft = 116; // cabe "En observación"
   const padRight = 48;
   const innerW = w - padLeft - padRight;
   const max = Math.max(...filas.map((f) => f.valor), 1);
@@ -159,7 +152,6 @@ export default function Dashboard({ onNavegar }: Props) {
   const [tendencias, setTendencias] = useState<Tendencia[] | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [decidiendoId, setDecidiendoId] = useState<number | null>(null);
 
   const cargar = useCallback(async () => {
     try {
@@ -201,23 +193,6 @@ export default function Dashboard({ onNavegar }: Props) {
     return () => clearInterval(intervalo);
   }, [cargarTendencias]);
 
-  const handleDecision = async (afirmacionId: number, decision: Decision) => {
-    setDecidiendoId(afirmacionId);
-    try {
-      const response = await fetch(`${API}/verificacion/${afirmacionId}/decision`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ decision }),
-      });
-      if (!response.ok) throw new Error('No se pudo registrar la decisión');
-      await cargar();
-    } catch (err) {
-      console.error('Error al registrar decisión', err);
-    } finally {
-      setDecidiendoId(null);
-    }
-  };
-
   const pendientes = evaluaciones.filter((e) => !e.decision);
   const valor = (n: number | undefined) => (cargando || n === undefined ? '—' : numero(n));
 
@@ -229,7 +204,7 @@ export default function Dashboard({ onNavegar }: Props) {
           <p>Vista general de SIVAT: lo que entra al sistema, lo que está creciendo y lo que espera revisión.</p>
         </div>
         <div className="dashboard-flujo" title="Principio de supervisión humana, transversal a todo SIVAT">
-          IA analiza → IA recomienda → periodista valida → editor decide
+          IA analiza → IA recomienda → la persona valida y decide
         </div>
       </div>
 
@@ -345,14 +320,7 @@ export default function Dashboard({ onNavegar }: Props) {
                 </div>
                 <div className="validacion-acciones">
                   <MedidorConfianza confianza={e.confianza_modelo} palabras={e.palabras_analizadas} compacto />
-                  <div className="validacion-botones">
-                    {(['Aceptado', 'Observado', 'Rechazado'] as Decision[]).map((decision) => (
-                      <button key={decision} type="button" disabled={decidiendoId === e.afirmacion_id}
-                              onClick={() => handleDecision(e.afirmacion_id, decision)}>
-                        {decision === 'Aceptado' ? 'Aceptar' : decision === 'Observado' ? 'Observar' : 'Rechazar'}
-                      </button>
-                    ))}
-                  </div>
+                  <ControlesDecision afirmacionId={e.afirmacion_id} compacto onHecho={cargar} />
                 </div>
               </li>
             ))}

@@ -47,7 +47,14 @@ const Header: React.FC<Props> = ({ vistaActiva, onNavigate }) => {
         
         <div className="header-right">
           
-          <button className="search-button" aria-label="Buscar">
+          <button
+            type="button"
+            className={`search-button ${vistaActiva === 'busqueda' ? 'active' : ''}`}
+            aria-label="Búsqueda"
+            aria-pressed={vistaActiva === 'busqueda'}
+            title="Búsqueda por palabras clave"
+            onClick={() => onNavigate('busqueda')}
+          >
             <Search size={20} />
           </button>
         </div>
