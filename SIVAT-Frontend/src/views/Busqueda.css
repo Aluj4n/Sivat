@@ -195,9 +195,8 @@ a.busqueda-titulo:hover {
   white-space: nowrap;
 }
 
-/* La decisión es humana: mismos colores que en Validación */
-.busqueda-decision.decision-aceptado { background-color: #e3f3e3; color: #1a6b1a; }
-.busqueda-decision.decision-rechazado { background-color: #fbe6e6; color: #a12121; }
+/* Mismo tono que la conclusión en Validación; en observación, ámbar de "en curso" */
+.busqueda-decision.decision-validado { background-color: #eef4fa; color: #1c527e; }
 .busqueda-decision.decision-observado { background-color: #fef3da; color: #8a5a00; }
 
 @media (max-width: 700px) {

@@ -8,7 +8,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from api import busqueda, dashboard, ingesta, internacionales, tendencias, verificacion
-from db.session import async_session
+from db.migraciones import aplicar_migraciones
+from db.session import async_session, engine
 from services.evidencia_service import ingerir_verificadores
 from services.ingesta_service import (
     ingerir_bluesky_internacional,
@@ -87,6 +88,7 @@ CICLOS_SEGUNDO_PLANO = [
 
 @app.on_event("startup")
 async def iniciar_ciclos() -> None:
+    await aplicar_migraciones(engine)
     app.state.tareas_fondo = []
     for nombre, tarea, intervalo, habilitado in CICLOS_SEGUNDO_PLANO:
         if not habilitado:

@@ -1,0 +1,118 @@
+.decision-controles {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.decision-botones {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.decision-botones button {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #e1e0d9;
+  background-color: #fff;
+  color: #1c527e;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.decision-botones button:hover:not(:disabled) {
+  background-color: #eef4fa;
+}
+
+.decision-botones button.is-principal {
+  background-color: #1c527e;
+  border-color: #1c527e;
+  color: #fff;
+}
+
+.decision-botones button.is-principal:hover:not(:disabled) {
+  background-color: #163f61;
+}
+
+.decision-botones button.is-peligro {
+  color: #a12121;
+}
+
+.decision-botones button.is-peligro:hover:not(:disabled) {
+  background-color: #fbe6e6;
+}
+
+.decision-botones button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.decision-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color: #f5f8fb;
+  border: 1px solid #dbe6f1;
+  border-radius: 8px;
+  padding: 12px 14px;
+  box-sizing: border-box;
+}
+
+.decision-form-titulo {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1c2b3a;
+}
+
+/* Conclusiones en un solo tono: es el veredicto humano, sin verde/rojo de "acierto" */
+.decision-conclusiones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.decision-conclusiones button {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid #c9d6e3;
+  background-color: #fff;
+  color: #1c2b3a;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.decision-conclusiones button.is-elegida {
+  background-color: #1c527e;
+  border-color: #1c527e;
+  color: #fff;
+}
+
+.decision-form textarea {
+  width: 100%;
+  border: 1px solid #e1e0d9;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 12px;
+  resize: vertical;
+  box-sizing: border-box;
+  /* Explícitos: con el sistema en modo oscuro, color-scheme (index.css) oscurece los campos */
+  background-color: #fff;
+  color: #0b0b0b;
+}
+
+.decision-error {
+  font-size: 12px;
+  color: #b91c1c;
+}
+
+.decision-form.is-compacto {
+  padding: 10px;
+}

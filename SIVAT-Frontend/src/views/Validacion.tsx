@@ -1,47 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
-import EvidenciaPanel, { type Evidencia } from '../components/EvidenciaPanel/EvidenciaPanel';
+import ControlesDecision from '../components/ControlesDecision/ControlesDecision';
+import EvidenciaPanel from '../components/EvidenciaPanel/EvidenciaPanel';
 import MedidorConfianza from '../components/MedidorConfianza/MedidorConfianza';
+import type { Evaluacion } from '../tipos/verificacion';
+import { formatearFecha } from '../utils/fecha';
+import { generarInformePDF } from '../utils/informe';
 import { titularDe } from '../utils/texto';
 import './Validacion.css';
 
 const API_BASE = '/api/v1/verificacion';
-
-type Decision = 'Aceptado' | 'Rechazado' | 'Observado';
-
-interface DecisionInfo {
-  decision_periodista: Decision;
-  comentarios: string | null;
-  fecha_decision: string;
-}
-
-interface Evaluacion {
-  afirmacion_id: number;
-  texto: string;
-  probabilidad_desinformacion: number;
-  confianza_modelo: number | null;
-  texto_suficiente: boolean;
-  palabras_analizadas: number;
-  senal: string;
-  recomendacion_sistema: string;
-  version_modelo: string;
-  fuente_origen: string | null;
-  url_original: string | null;
-  evidencia_buscada: boolean;
-  nivel_evidencia_disponible: string | null;
-  fuentes_coincidentes: number | null;
-  fuentes_contradictorias: number | null;
-  fuente_oficial_encontrada: boolean | null;
-  cobertura_evidencia: string | null;
-  explicacion: string[];
-  evidencias: Evidencia[];
-  fecha_evaluacion?: string;
-  decision?: DecisionInfo | null;
-}
-
-function formatearFecha(iso?: string): string {
-  if (!iso) return '';
-  return new Date(iso).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' });
-}
+const MAX_EN_COLA = 200;
 
 function TextoAnalizado({ evaluacion }: { evaluacion: Evaluacion }) {
   const titular = titularDe(evaluacion.texto);
@@ -59,18 +27,36 @@ function TextoAnalizado({ evaluacion }: { evaluacion: Evaluacion }) {
   );
 }
 
+function MetaFuente({ evaluacion }: { evaluacion: Evaluacion }) {
+  return (
+    <span className="cola-meta">
+      {evaluacion.fuente_origen ? `${evaluacion.fuente_origen} · ` : 'Ingreso manual · '}
+      {formatearFecha(evaluacion.fecha_evaluacion)} · modelo {evaluacion.version_modelo}
+      {evaluacion.url_original && (
+        <>
+          {' · '}
+          <a href={evaluacion.url_original} target="_blank" rel="noopener noreferrer">
+            Ver fuente ↗
+          </a>
+        </>
+      )}
+    </span>
+  );
+}
+
 export default function Validacion() {
   const [texto, setTexto] = useState('');
   const [analizando, setAnalizando] = useState(false);
   const [errorAnalisis, setErrorAnalisis] = useState<string | null>(null);
   const [cola, setCola] = useState<Evaluacion[]>([]);
   const [cargandoCola, setCargandoCola] = useState(true);
-  const [decidiendoId, setDecidiendoId] = useState<number | null>(null);
   const [buscandoEvidenciaId, setBuscandoEvidenciaId] = useState<number | null>(null);
+  const [eliminandoId, setEliminandoId] = useState<number | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
 
   const cargarCola = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/recientes?limit=50`);
+      const response = await fetch(`${API_BASE}/recientes?limit=${MAX_EN_COLA}`);
       if (!response.ok) throw new Error('No se pudo obtener la cola de validación');
       const data: Evaluacion[] = await response.json();
       setCola(data);
@@ -111,23 +97,6 @@ export default function Validacion() {
     }
   };
 
-  const handleDecision = async (afirmacionId: number, decision: Decision) => {
-    setDecidiendoId(afirmacionId);
-    try {
-      const response = await fetch(`${API_BASE}/${afirmacionId}/decision`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ decision }),
-      });
-      if (!response.ok) throw new Error('No se pudo registrar la decisión');
-      await cargarCola();
-    } catch (err) {
-      console.error('Error al registrar decisión', err);
-    } finally {
-      setDecidiendoId(null);
-    }
-  };
-
   const handleBuscarEvidencia = async (afirmacionId: number) => {
     setBuscandoEvidenciaId(afirmacionId);
     try {
@@ -142,17 +111,69 @@ export default function Validacion() {
     }
   };
 
+  const handleEliminar = async (afirmacionId: number) => {
+    if (!window.confirm('¿Eliminar esta afirmación validada? Se borrará por completo de SIVAT y no se puede deshacer.')) {
+      return;
+    }
+    setEliminandoId(afirmacionId);
+    setAviso(null);
+    try {
+      const response = await fetch(`${API_BASE}/${afirmacionId}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('No se pudo eliminar la afirmación.');
+      setCola((prev) => prev.filter((e) => e.afirmacion_id !== afirmacionId));
+    } catch (err) {
+      setAviso(err instanceof Error ? err.message : 'Error al eliminar.');
+    } finally {
+      setEliminandoId(null);
+    }
+  };
+
+  const handleInforme = (evaluacion: Evaluacion) => {
+    setAviso(null);
+    if (!generarInformePDF(evaluacion)) {
+      setAviso('El navegador bloqueó la ventana del informe: permite las ventanas emergentes para este sitio.');
+    }
+  };
+
   const pendientes = cola.filter((e) => !e.decision);
-  const validadas = cola.filter((e) => e.decision);
+  const observadas = cola.filter((e) => e.decision?.decision_periodista === 'Observado');
+  const validadas = cola.filter((e) => e.decision?.decision_periodista === 'Validado');
+
+  // Pendientes y observadas comparten tarjeta: cambia solo si se puede volver a observar
+  const renderItemCola = (e: Evaluacion, enObservacion: boolean) => (
+    <li key={e.afirmacion_id} className="cola-item">
+      <div className="cola-info">
+        <TextoAnalizado evaluacion={e} />
+        <MetaFuente evaluacion={e} />
+        {enObservacion && e.decision && (
+          <span className="cola-meta">En observación desde {formatearFecha(e.decision.fecha_decision)}</span>
+        )}
+      </div>
+      <div className="cola-acciones">
+        <MedidorConfianza confianza={e.confianza_modelo} palabras={e.palabras_analizadas} />
+        <ControlesDecision afirmacionId={e.afirmacion_id} permitirObservar={!enObservacion} onHecho={cargarCola} />
+      </div>
+      <EvidenciaPanel
+        evidenciaBuscada={e.evidencia_buscada}
+        nivel={e.nivel_evidencia_disponible}
+        coincidentes={e.fuentes_coincidentes}
+        contradictorias={e.fuentes_contradictorias}
+        explicacion={e.explicacion}
+        evidencias={e.evidencias}
+        buscando={buscandoEvidenciaId === e.afirmacion_id}
+        onBuscar={() => handleBuscarEvidencia(e.afirmacion_id)}
+      />
+    </li>
+  );
 
   return (
     <div className="validacion-view">
       <div className="validacion-header">
         <div>
           <h1>Validación</h1>
-          <p>El clasificador analiza patrones de posible desinformación; la decisión final siempre la registra el periodista.</p>
+          <p>El clasificador analiza patrones de posible desinformación; la conclusión siempre la registra una persona.</p>
         </div>
-        <div className="validacion-flujo">IA analiza → IA recomienda → periodista valida → editor decide</div>
+        <div className="validacion-flujo">IA analiza → IA recomienda → la persona valida y decide</div>
       </div>
 
       <section className="panel analizar-panel">
@@ -171,98 +192,80 @@ export default function Validacion() {
         </div>
       </section>
 
-      <section className="panel">
-        <h2>Pendientes de validación</h2>
-        <span className="panel-subtitle">{pendientes.length} afirmación(es) esperando revisión periodística</span>
+      {/* Izquierda: lo que falta decidir. Derecha: lo ya validado. */}
+      <div className="validacion-columnas">
+        <div className="validacion-columna">
+          <section className="panel">
+            <h2>Pendientes de validación</h2>
+            <span className="panel-subtitle">
+              {pendientes.length} afirmación(es) esperando revisión · Validar registra tu conclusión, Observar la deja
+              en seguimiento y Descartar la elimina por completo
+            </span>
 
-        {cargandoCola && <p className="validacion-estado">Cargando…</p>}
-        {!cargandoCola && pendientes.length === 0 && (
-          <p className="validacion-estado">No hay afirmaciones pendientes. Analiza una arriba para empezar.</p>
-        )}
+            {cargandoCola && <p className="validacion-estado">Cargando…</p>}
+            {!cargandoCola && pendientes.length === 0 && (
+              <p className="validacion-estado">No hay afirmaciones pendientes. Analiza una arriba para empezar.</p>
+            )}
 
-        <ul className="cola-lista">
-          {pendientes.map((e) => {
-            return (
-              <li key={e.afirmacion_id} className="cola-item">
-                <div className="cola-info">
-                  <TextoAnalizado evaluacion={e} />
-                  <span className="cola-meta">
-                    {e.fuente_origen ? `${e.fuente_origen} · ` : 'Ingreso manual · '}
-                    {formatearFecha(e.fecha_evaluacion)} · modelo {e.version_modelo}
-                    {e.url_original && (
-                      <>
-                        {' · '}
-                        <a href={e.url_original} target="_blank" rel="noopener noreferrer">
-                          Ver fuente ↗
-                        </a>
-                      </>
-                    )}
-                  </span>
-                </div>
-                <div className="cola-acciones">
-                  <MedidorConfianza confianza={e.confianza_modelo} palabras={e.palabras_analizadas} />
-                  <div className="cola-botones">
-                    <button
-                      type="button"
-                      disabled={decidiendoId === e.afirmacion_id}
-                      onClick={() => handleDecision(e.afirmacion_id, 'Aceptado')}
-                    >
-                      Aceptar
-                    </button>
-                    <button
-                      type="button"
-                      disabled={decidiendoId === e.afirmacion_id}
-                      onClick={() => handleDecision(e.afirmacion_id, 'Observado')}
-                    >
-                      Observar
-                    </button>
-                    <button
-                      type="button"
-                      disabled={decidiendoId === e.afirmacion_id}
-                      onClick={() => handleDecision(e.afirmacion_id, 'Rechazado')}
-                    >
-                      Rechazar
-                    </button>
+            <ul className="cola-lista">{pendientes.map((e) => renderItemCola(e, false))}</ul>
+          </section>
+
+          {observadas.length > 0 && (
+            <section className="panel">
+              <h2>En observación</h2>
+              <span className="panel-subtitle">
+                {observadas.length} en seguimiento · Actualiza la evidencia cuando haya novedades y luego valídala o
+                descártala
+              </span>
+              <ul className="cola-lista">{observadas.map((e) => renderItemCola(e, true))}</ul>
+            </section>
+          )}
+        </div>
+
+        <div className="validacion-columna">
+          <section className="panel">
+            <h2>Ya validadas</h2>
+            <span className="panel-subtitle">
+              {validadas.length} con conclusión registrada por el periodista, diferenciada del análisis de la IA
+            </span>
+            {aviso && <p className="analizar-error">{aviso}</p>}
+            {!cargandoCola && validadas.length === 0 && (
+              <p className="validacion-estado">Aún no hay afirmaciones validadas.</p>
+            )}
+            <ul className="cola-lista">
+              {validadas.map((e) => (
+                <li key={e.afirmacion_id} className="cola-item validada-item">
+                  <div className="cola-info">
+                    <p className="cola-texto">{titularDe(e.texto)}</p>
+                    <span className="cola-meta">
+                      {e.fuente_origen ?? 'Ingreso manual'} · Confianza del modelo:{' '}
+                      {e.confianza_modelo === null ? 'texto insuficiente' : `${e.confianza_modelo}%`} · validada el{' '}
+                      {formatearFecha(e.decision!.fecha_decision)}
+                    </span>
+                    {e.decision!.comentarios && <span className="validada-comentario">«{e.decision!.comentarios}»</span>}
                   </div>
-                </div>
-                <EvidenciaPanel
-                  evidenciaBuscada={e.evidencia_buscada}
-                  nivel={e.nivel_evidencia_disponible}
-                  coincidentes={e.fuentes_coincidentes}
-                  contradictorias={e.fuentes_contradictorias}
-                  explicacion={e.explicacion}
-                  evidencias={e.evidencias}
-                  buscando={buscandoEvidenciaId === e.afirmacion_id}
-                  onBuscar={() => handleBuscarEvidencia(e.afirmacion_id)}
-                />
-              </li>
-            );
-          })}
-        </ul>
-      </section>
-
-      {validadas.length > 0 && (
-        <section className="panel">
-          <h2>Ya validadas</h2>
-          <span className="panel-subtitle">Decisión editorial registrada, diferenciada de la recomendación de la IA</span>
-          <ul className="cola-lista">
-            {validadas.map((e) => (
-              <li key={e.afirmacion_id} className="cola-item">
-                <div className="cola-info">
-                  <p className="cola-texto">{titularDe(e.texto)}</p>
-                  <span className="cola-meta">
-                    Confianza del modelo: {e.confianza_modelo === null ? 'texto insuficiente' : `${e.confianza_modelo}%`} ·{' '}
-                    {formatearFecha(e.fecha_evaluacion)}
-                  </span>
-                </div>
-                <span className={`decision-badge decision-${e.decision!.decision_periodista.toLowerCase()}`}>
-                  {e.decision!.decision_periodista} · {formatearFecha(e.decision!.fecha_decision)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+                  <div className="validada-lado">
+                    <span className="conclusion-badge">{e.decision!.conclusion ?? 'Sin conclusión registrada'}</span>
+                    <div className="validada-botones">
+                      <button type="button" onClick={() => handleInforme(e)}>
+                        Informe PDF
+                      </button>
+                      <button
+                        type="button"
+                        className="is-peligro"
+                        disabled={eliminandoId === e.afirmacion_id}
+                        onClick={() => handleEliminar(e.afirmacion_id)}
+                      >
+                        {eliminandoId === e.afirmacion_id ? 'Eliminando…' : 'Eliminar'}
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
+      </div>
     </div>
   );
 }

@@ -20,6 +20,7 @@ from models.entities import Afirmacion, DecisionEditorial, EvaluacionIA, FuenteE
 from services.clasificador_service import clasificar_senal
 from services.evidencia_service import titular_de
 from services.normalizacion import PAISES_PERU, PANEL_PERU, serializar_feed
+from services.verificacion_service import DECISIONES
 
 MAX_RESULTADOS = 30
 
@@ -95,6 +96,8 @@ async def historial_afirmaciones(db: AsyncSession) -> List[dict]:
             continue
         vistas.add(evaluacion.afirmacion_id)
         decision = decision_por_afirmacion.get(evaluacion.afirmacion_id)
+        if decision is not None and decision.decision_periodista not in DECISIONES:
+            decision = None  # estado del flujo anterior: cuenta como pendiente
         suficiente = len(contenido.split()) >= settings.MIN_PALABRAS_MODELO
         historial.append({
             "afirmacion_id": evaluacion.afirmacion_id,
@@ -109,6 +112,7 @@ async def historial_afirmaciones(db: AsyncSession) -> List[dict]:
             ),
             "nivel_evidencia_disponible": evaluacion.nivel_evidencia_disponible,
             "decision": decision.decision_periodista if decision else None,
+            "conclusion": decision.conclusion if decision else None,
             "comentarios": decision.comentarios if decision else None,
             "fecha_decision": decision.fecha_decision.isoformat() if decision else None,
         })

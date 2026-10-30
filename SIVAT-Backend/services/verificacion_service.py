@@ -11,6 +11,15 @@ logger = logging.getLogger(__name__)
 
 RECOMENDACION_SISTEMA = "Requiere validación periodística"
 
+# Flujo editorial: Validar -> "Ya validadas", Observar -> "En observación" (en
+# seguimiento). Descartar no es un estado: borra la afirmación por completo.
+# Cualquier otro valor guardado (p. ej. 'Rechazado' del flujo anterior) cuenta
+# como pendiente.
+DECISIONES = ("Validado", "Observado")
+# Conclusión que registra el periodista al validar: el veredicto es humano,
+# nunca de la IA (RNF-08)
+CONCLUSIONES = ("Verdadera", "Falsa", "Engañosa", "Sin evidencia suficiente")
+
 
 async def evaluar_y_guardar(
     db: AsyncSession,

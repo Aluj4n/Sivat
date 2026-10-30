@@ -5,19 +5,22 @@ from datetime import datetime
 from typing import List, Literal, Optional
 from urllib.parse import urlparse
 
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Response
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import settings
+from core.eventbus import feed_bus
 from db.session import get_db
-from models.entities import Afirmacion, DecisionEditorial, EvaluacionIA, EvidenciaAfirmacion, FuenteExterna
+from models.entities import (
+    Afirmacion, DecisionEditorial, EvaluacionIA, EvidenciaAfirmacion, FuenteExterna, NoticiaFeed,
+)
 from services.clasificador_service import clasificar_senal
 from services.contenido_service import Contenido, es_url, obtener_contenido
 from services.evidencia_service import buscar_y_guardar_evidencia, explicar, titular_de
-from services.normalizacion import _identificador, _recortar
-from services.verificacion_service import evaluar_y_guardar
+from services.normalizacion import _identificador, _recortar, serializar_feed
+from services.verificacion_service import CONCLUSIONES, DECISIONES, evaluar_y_guardar
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -34,6 +37,7 @@ class DecisionInfo(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     decision_periodista: str
+    conclusion: Optional[str] = None
     comentarios: Optional[str]
     fecha_decision: datetime
 
@@ -84,8 +88,17 @@ class EvaluacionResponse(BaseModel):
 
 
 class DecisionRequest(BaseModel):
-    decision: Literal["Aceptado", "Rechazado", "Observado"]
+    decision: Literal[DECISIONES]
+    conclusion: Optional[Literal[CONCLUSIONES]] = None
     comentarios: Optional[str] = Field(None, max_length=1000)
+
+    @model_validator(mode="after")
+    def conclusion_solo_al_validar(self) -> "DecisionRequest":
+        if self.decision == "Validado" and self.conclusion is None:
+            raise ValueError("Para validar hay que registrar la conclusión del periodista")
+        if self.decision != "Validado" and self.conclusion is not None:
+            raise ValueError("La conclusión solo se registra al validar")
+        return self
 
 
 def construir_respuesta(
@@ -96,6 +109,8 @@ def construir_respuesta(
     evidencias: Optional[List[EvidenciaAfirmacion]] = None,
 ) -> EvaluacionResponse:
     probabilidad = evaluacion.probabilidad_desinformacion
+    if decision is not None and decision.decision_periodista not in DECISIONES:
+        decision = None  # estado del flujo anterior (p. ej. 'Rechazado'): vuelve a pendientes
     evidencias = sorted(evidencias or [], key=lambda e: e.similitud, reverse=True)
     evidencia_buscada = evaluacion.nivel_evidencia_disponible is not None
     palabras = len(texto.split())
@@ -277,7 +292,8 @@ async def buscar_evidencia(afirmacion_id: int, db: AsyncSession = Depends(get_db
 @router.post("/{afirmacion_id}/decision", response_model=DecisionInfo)
 async def registrar_decision(afirmacion_id: int, payload: DecisionRequest, db: AsyncSession = Depends(get_db)):
     """
-    Registra la decisión del periodista sobre una afirmación (RF-09/RF-11).
+    Registra la decisión del periodista sobre una afirmación (RF-09/RF-11):
+    'Validado' con su conclusión, u 'Observado' para dejarla en seguimiento.
     La recomendación de la IA queda siempre diferenciada de esta decisión
     humana, tal como exige el control de supervisión del Business Case (5.1).
     """
@@ -297,6 +313,7 @@ async def registrar_decision(afirmacion_id: int, payload: DecisionRequest, db: A
         afirmacion_id=afirmacion_id,
         recomendacion_ia=clasificar_senal(evaluacion.probabilidad_desinformacion) if evaluacion else "Sin evaluación",
         decision_periodista=payload.decision,
+        conclusion=payload.conclusion,
         comentarios=payload.comentarios,
     )
     db.add(decision)
@@ -304,3 +321,41 @@ async def registrar_decision(afirmacion_id: int, payload: DecisionRequest, db: A
     await db.refresh(decision)
 
     return DecisionInfo.model_validate(decision)
+
+
+@router.delete("/{afirmacion_id}", status_code=204)
+async def eliminar_afirmacion(afirmacion_id: int, db: AsyncSession = Depends(get_db)):
+    """
+    Descarta o elimina una afirmación por completo, también de la base de
+    datos: sus evaluaciones, evidencia y decisiones, y su FuenteExterna si
+    ninguna otra afirmación la usa. Si la noticia sigue en el feed, vuelve a
+    quedar disponible para validar. No se puede deshacer.
+    """
+    afirmacion = await db.get(Afirmacion, afirmacion_id)
+    if afirmacion is None:
+        raise HTTPException(status_code=404, detail="Afirmación no encontrada")
+
+    noticias = (await db.execute(
+        select(NoticiaFeed).where(NoticiaFeed.afirmacion_id == afirmacion_id)
+    )).scalars().all()
+    for noticia in noticias:
+        noticia.afirmacion_id = None
+        noticia.en_validacion = False
+
+    for tabla in (EvidenciaAfirmacion, DecisionEditorial, EvaluacionIA):
+        await db.execute(delete(tabla).where(tabla.afirmacion_id == afirmacion_id))
+    fuente_id = afirmacion.fuente_id
+    await db.delete(afirmacion)
+    await db.flush()
+
+    if fuente_id is not None:
+        en_uso = await db.scalar(select(func.count()).select_from(Afirmacion).where(Afirmacion.fuente_id == fuente_id))
+        if not en_uso:
+            await db.execute(delete(FuenteExterna).where(FuenteExterna.id == fuente_id))
+
+    await db.commit()
+
+    # Los paneles abiertos quitan la marca "En validación" de la tarjeta
+    for noticia in noticias:
+        await feed_bus.publish(serializar_feed(noticia))
+    return Response(status_code=204)

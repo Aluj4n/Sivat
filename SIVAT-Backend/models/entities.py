@@ -164,7 +164,10 @@ class DecisionEditorial(Base):
     id = Column(Integer, primary_key=True, index=True)
     afirmacion_id = Column(Integer, ForeignKey("afirmacion.id"))
     recomendacion_ia = Column(String(50)) # e.g., 'Alta Probabilidad de Falsedad'
-    decision_periodista = Column(String(50)) # 'Aceptado', 'Rechazado', 'Observado'
+    # 'Validado' | 'Observado' (en seguimiento). Descartar no se registra: borra la afirmación.
+    decision_periodista = Column(String(50))
+    # Conclusión del periodista al validar (Verdadera, Falsa...). Es humana, no de la IA (RNF-08)
+    conclusion = Column(String(50), nullable=True)
     comentarios = Column(Text, nullable=True)
     fecha_decision = Column(DateTime(timezone=True), server_default=func.now())
     

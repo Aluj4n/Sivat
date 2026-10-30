@@ -4,7 +4,7 @@
 
 SIVAT capta noticias y rumores de medios y redes sociales en tiempo real, detecta los temas que están creciendo y ayuda al periodista a verificarlos con un modelo de machine learning y evidencia de verificadores.
 
-> **Principio rector:** IA analiza → IA recomienda → periodista valida → editor decide.
+> **Principio rector:** IA analiza → IA recomienda → la persona valida y decide.
 >
 > SIVAT **nunca** emite un veredicto automático de verdadero o falso (RNF-08). Todo lo que muestra son señales y evidencia para que una persona decida.
 
@@ -20,7 +20,7 @@ Proyecto académico del curso *Sistemas Inteligentes y Machine Learning* (UPN).
 | **Perú** | Feed en vivo de noticias sobre Perú (Canal N, RPP, Andina, El Comercio, La República y más), con botón **Validar**. |
 | **Internacionales** | Feed en vivo de noticias y rumores internacionales (GDELT, medios RSS, Bluesky, Reddit, YouTube). |
 | **Tendencias** | Agrupa el feed por tema con IA y ordena los temas por **prioridad de verificación** (qué conviene revisar primero). |
-| **Validación** | Analiza una noticia o enlace: modelo de clasificación, evidencia de verificadores y medios (RAG) y decisión del periodista. |
+| **Validación** | Analiza una noticia o enlace: modelo de clasificación y evidencia de verificadores y medios (RAG). El periodista la **valida** con su conclusión (Verdadera, Falsa, Engañosa o Sin evidencia suficiente), la **observa** (seguimiento) o la **descarta** (se elimina por completo). Las validadas generan un **informe PDF**. |
 | **Búsqueda** (lupa) | Busca por palabras clave, sin importar tildes, en el feed de 24 h y en el historial de afirmaciones evaluadas. |
 
 ### Componentes de inteligencia artificial

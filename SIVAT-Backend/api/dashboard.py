@@ -9,13 +9,13 @@ from core.config import settings
 from db.session import get_db
 from models.entities import Afirmacion, DecisionEditorial, NoticiaFeed
 from services.normalizacion import PANEL_INTERNACIONAL, PANEL_PERU, panel_de
+from services.verificacion_service import DECISIONES
 
 router = APIRouter()
 
 # Tipos de fuente del gráfico de ingesta; lo que no es una de estas es un medio por RSS
 TIPOS_FUENTE = ["GDELT", "Medios RSS", "Bluesky", "Reddit", "YouTube"]
 ORIGENES_PROPIOS = {"GDELT", "Bluesky", "Reddit", "YouTube", "X"}
-DECISIONES = ["Aceptado", "Observado", "Rechazado"]
 
 
 def _tipo_fuente(origen: str) -> str:
@@ -47,7 +47,8 @@ async def resumen(db: AsyncSession = Depends(get_db)):
         .order_by(DecisionEditorial.afirmacion_id, DecisionEditorial.fecha_decision)
     )
     ultima = {afirmacion_id: decision for afirmacion_id, decision in decisiones.all()}
-    conteo = Counter(ultima.values())
+    # Un estado fuera del flujo actual (p. ej. 'Rechazado' antiguo) cuenta como pendiente
+    conteo = Counter(d for d in ultima.values() if d in DECISIONES)
 
     return {
         "feed": {
@@ -58,7 +59,7 @@ async def resumen(db: AsyncSession = Depends(get_db)):
         },
         "afirmaciones": {
             "evaluadas": evaluadas,
-            "pendientes": max(evaluadas - len(ultima), 0),
+            "pendientes": max(evaluadas - sum(conteo.values()), 0),
             "decisiones": {decision: conteo.get(decision, 0) for decision in DECISIONES},
         },
     }

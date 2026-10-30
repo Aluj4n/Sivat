@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import NewsCard from '../components/NewsCard/NewsCard';
 import type { NoticiaFeed, PanelNoticias } from '../components/PanelFeed/PanelFeed';
+import type { Conclusion, Decision } from '../tipos/verificacion';
 import { formatearFecha } from '../utils/fecha';
 import '../components/PanelFeed/PanelFeed.css';
 import './Busqueda.css';
@@ -13,7 +14,8 @@ interface AfirmacionHistorial {
   fecha_evaluacion: string | null;
   senal: string;
   nivel_evidencia_disponible: string | null;
-  decision: 'Aceptado' | 'Rechazado' | 'Observado' | null;
+  decision: Decision | null;
+  conclusion: Conclusion | null;
   comentarios: string | null;
   fecha_decision: string | null;
 }
@@ -206,7 +208,11 @@ export default function Busqueda({ onIrAValidacion }: Props) {
                   </span>
                 </div>
                 <span className={`busqueda-decision ${h.decision ? `decision-${h.decision.toLowerCase()}` : ''}`}>
-                  {h.decision ? `${h.decision} · ${formatearFecha(h.fecha_decision)}` : 'Pendiente de validación'}
+                  {h.decision === 'Validado'
+                    ? `Validada: ${h.conclusion ?? 'sin conclusión'} · ${formatearFecha(h.fecha_decision)}`
+                    : h.decision === 'Observado'
+                      ? `En observación · ${formatearFecha(h.fecha_decision)}`
+                      : 'Pendiente de validación'}
                 </span>
               </li>
             ))}
